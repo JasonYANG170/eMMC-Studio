@@ -2,7 +2,7 @@
 # Install a prebuilt distribution on Debian/Armbian; never change disk layouts.
 set -eu
 umask 022
-cd "$(CDPATH= cd -- "$(dirname -- "$0")/.." && pwd)"
+cd "$(CDPATH='' cd -- "$(dirname -- "$0")/.." && pwd)"
 check_only=0
 skip_apt=0
 for option in "$@"; do
