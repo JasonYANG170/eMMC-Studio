@@ -17,7 +17,10 @@ done
 command -v apt-get >/dev/null || { echo '仅支持 Debian/Ubuntu/Armbian 的 apt 系统。' >&2; exit 1; }
 command -v python3 >/dev/null || { echo '请先安装 python3。' >&2; exit 1; }
 [ ! -L /opt/emmc-studio ] || { echo '/opt/emmc-studio 不允许是符号链接。' >&2; exit 1; }
-for file in dist/index.html backend/web.py backend/worker.py deploy/initialize.py deploy/check_ready.py deploy/emmc-web.service deploy/emmc-worker.service README.md VERSION; do
+if [ -e /usr/local/bin/emmc-studio ] || [ -L /usr/local/bin/emmc-studio ]; then
+    [ ! -L /usr/local/bin/emmc-studio ] && [ -f /usr/local/bin/emmc-studio ] && grep -q '^# eMMC Studio CLI launcher$' /usr/local/bin/emmc-studio || { echo 'emmc-studio 命令已被其他文件占用，拒绝覆盖。' >&2; exit 1; }
+fi
+for file in dist/index.html backend/web.py backend/worker.py backend/cli.py docs/CLI.md deploy/emmc-studio-cli.sh deploy/initialize.py deploy/check_ready.py deploy/emmc-web.service deploy/emmc-worker.service README.md VERSION; do
     [ -f "$file" ] || { echo "缺少 $file；源码需要先在电脑运行 npm ci && npm run build。" >&2; exit 1; }
 done
 exec 9>/run/lock/emmc-studio-install.lock
@@ -64,6 +67,11 @@ cleanup() {
                     rm -f "/etc/systemd/system/$service.service"
                 fi
             done
+            if [ -f "$work/emmc-studio-cli.sh" ]; then
+                cp "$work/emmc-studio-cli.sh" /usr/local/bin/emmc-studio
+            else
+                rm -f /usr/local/bin/emmc-studio
+            fi
             systemctl daemon-reload
         fi
         [ "$worker_was_active" = 0 ] || systemctl start emmc-worker
@@ -79,15 +87,17 @@ cleanup() {
 }
 trap cleanup EXIT
 trap 'exit 1' HUP INT TERM
-install -d -m 0755 "$work/app/backend" "$work/app/dist" "$work/app/deploy"
+install -d -m 0755 "$work/app/backend" "$work/app/dist" "$work/app/deploy" "$work/app/docs"
 cp backend/*.py "$work/app/backend/"
 cp -R dist/. "$work/app/dist/"
 cp deploy/*.sh deploy/*.py deploy/*.service "$work/app/deploy/"
 cp README.md VERSION "$work/app/"
+cp docs/CLI.md "$work/app/docs/"
 chmod -R go-w "$work/app"
 for service in emmc-web emmc-worker; do
     [ ! -f "/etc/systemd/system/$service.service" ] || cp "/etc/systemd/system/$service.service" "$work/"
 done
+[ ! -f /usr/local/bin/emmc-studio ] || cp /usr/local/bin/emmc-studio "$work/emmc-studio-cli.sh"
 # Close job admission, then recheck in case a job began during dependency installation.
 [ "$web_was_active" = 0 ] || systemctl stop emmc-web
 python3 deploy/check_ready.py
@@ -97,6 +107,8 @@ switched=1
 mv "$work/app" /opt/emmc-studio
 cp deploy/emmc-*.service /etc/systemd/system/
 python3 deploy/initialize.py
+install -d -m 0755 /usr/local/bin
+install -m 0755 deploy/emmc-studio-cli.sh /usr/local/bin/emmc-studio
 systemctl daemon-reload
 systemctl enable emmc-worker emmc-web
 systemctl restart emmc-worker
@@ -105,6 +117,7 @@ sleep 2
 systemctl is-active --quiet emmc-worker
 systemctl is-active --quiet emmc-web
 python3 -c 'import urllib.request; r=urllib.request.urlopen("http://127.0.0.1/api/v1/auth/status", timeout=10); assert r.status == 200'
+/usr/local/bin/emmc-studio --json devices >/dev/null
 if [ -d "$work/previous" ]; then
     backup="/opt/emmc-studio.previous.$(date +%Y%m%d%H%M%S).$$"
     mv "$work/previous" "$backup"

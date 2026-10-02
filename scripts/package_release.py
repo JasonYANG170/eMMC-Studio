@@ -15,7 +15,7 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     if not (root / "dist/index.html").is_file():
         parser.error("Run npm ci and npm run build first")
-    files = [root / "README.md", root / "VERSION"]
+    files = [root / "README.md", root / "VERSION", root / "docs/CLI.md"]
     files += sorted((root / "backend").glob("*.py"))
     files += sorted(
         p for p in (root / "deploy").iterdir() if p.suffix in {".sh", ".py", ".service"}

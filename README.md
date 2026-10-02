@@ -4,6 +4,8 @@
 
 默认监听 **0.0.0.0:80**，访问 `http://设备IP/`。支持手机和系统深浅色同步。
 
+从 1.1.0 开始支持串口与 SSH 命令行：`sudo emmc-studio --help`，详见 [CLI 操作教程](docs/CLI.md)。命令行与网页共用磁盘保护和任务记录。
+
 ![工作空间](docs/images/overview-dark.png)
 
 ## 功能
