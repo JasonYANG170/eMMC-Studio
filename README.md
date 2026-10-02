@@ -1,3 +1,5 @@
+[简体中文](README.md) | [English](README_en.md)
+
 # eMMC Studio
 
 中文局域网 eMMC 磁盘管理工作台，通过浏览器管理 eMMC 用户区、BOOT0/BOOT1、分区和 USB 存储。React + TypeScript + Vite 前端，Flask + Waitress 后端；普通用户提供网页，独立 root 工作进程执行磁盘操作。
