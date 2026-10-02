@@ -32,10 +32,18 @@ jobs:
           python tests/test_auth_linux.py
           python tests/test_cache_linux.py
           python tests/test_extcsd_lock.py
+          python tests/test_cli.py
+      - name: CLI loop-device integration
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y parted gdisk e2fsprogs dosfstools
+          getent group emmc-web >/dev/null || sudo groupadd --system emmc-web
+          getent passwd emmc-web >/dev/null || sudo useradd --system --gid emmc-web emmc-web
+          sudo "$(command -v python)" tests/test_cli_linux.py
       - name: Deployment shell validation
         run: |
-          for script in install.sh deploy/install.sh deploy/uninstall.sh; do sh -n "$script"; done
-          shellcheck -S warning install.sh deploy/install.sh deploy/uninstall.sh
+          for script in install.sh deploy/*.sh; do sh -n "$script"; done
+          shellcheck -S warning install.sh deploy/*.sh
       - run: python scripts/package_release.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
         with:
