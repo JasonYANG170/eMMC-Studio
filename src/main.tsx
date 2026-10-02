@@ -279,6 +279,7 @@ function App() {
       setDisks(data.disks);
       setBusy(data.busy);
       setFree(data.local_free);
+      setError((previous) => (previous.includes('Failed to fetch') ? '' : previous));
       setSelected((prev) =>
         data.disks.some((d: Disk) => d.path === prev)
           ? prev

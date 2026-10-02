@@ -13,10 +13,14 @@ export function UpgradePage({ api, post }: Props) {
   const [file, setFile] = useState<File | null>(null);
   const [reinstall, setReinstall] = useState(false);
   const [upload, setUpload] = useState<number | null>(null);
+  const [connected, setConnected] = useState(true);
   const refresh = async () => {
     try {
       setStatus(await api('/upgrade'));
+      setConnected(true);
+      setError((previous) => (previous.includes('Failed to fetch') ? '' : previous));
     } catch {
+      setConnected(false);
       // Web/worker restart during installation. Polling resumes automatically.
     }
   };
@@ -66,6 +70,9 @@ export function UpgradePage({ api, post }: Props) {
   return (
     <>
       {error && <div className="alert error">{error}</div>}
+      {!connected && (
+        <p className="muted">网页服务暂时断开，正在自动重新连接。升级任务在后台继续运行。</p>
+      )}
       <section className="panel">
         <div className="panel-head">
           <h2>
