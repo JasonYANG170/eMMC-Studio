@@ -2,7 +2,7 @@
 
 # eMMC Studio
 
-A Chinese-language eMMC disk management workspace for the local network. Manage the eMMC user area, BOOT0/BOOT1, partitions, and USB storage in a browser. The frontend uses React, TypeScript, and Vite; the backend uses Flask and Waitress. An unprivileged user serves the web interface, while a separate root worker performs disk operations.
+An eMMC disk management workspace for the local network. Manage the eMMC user area, BOOT0/BOOT1, partitions, and USB storage in a browser. The frontend uses React, TypeScript, and Vite; the backend uses Flask and Waitress. An unprivileged user serves the web interface, while a separate root worker performs disk operations.
 
 Listens on **0.0.0.0:80** by default. Open `http://<device-IP>/`. Supports mobile browsers and follows the system light/dark theme.
 
@@ -127,7 +127,7 @@ Alternatively, copy the built `backend/`, `dist/`, `deploy/`, `README.md`, and `
 3. Enter the setup code and create an administrator password of 8–128 characters. The default username is `emmc-admin`.
 4. After login, check the model, capacity, CID, system protection, and BOOT status under Disk details.
 
-There is no built-in default password. Only a digest of the setup code is stored, and the code expires after initialization. Updates preserve the existing administrator. HTTP on port 80 is intended for a trusted LAN; use an HTTPS reverse proxy or VPN across untrusted networks.
+There is no built-in default password. Only a digest of the setup code is stored, and the code expires after initialization. Updates preserve the existing administrator. Use HTTP on port 80 within a trusted LAN; use an HTTPS reverse proxy or VPN across untrusted networks.
 
 ## Updates and maintenance
 
