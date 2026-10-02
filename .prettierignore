@@ -1,0 +1,7 @@
+node_modules/
+dist/
+.deploy/
+.test-build/
+release/
+qa/
+*.txt

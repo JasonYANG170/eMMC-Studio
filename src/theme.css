@@ -1,0 +1,468 @@
+/* Theme tokens and final component colors. Keep after layout CSS to avoid stale light overrides. */
+:root {
+  color-scheme: light;
+  color: var(--ink);
+  background: var(--bg);
+  --bg: #f3f7fd;
+  --surface: #fff;
+  --ink: #203755;
+  --muted: #607591;
+  --line: #dce6f3;
+  --teal: #2367ce;
+  --primary: #286bdd;
+  --soft: #edf4ff;
+  --focus: #286bdd;
+  --health-good: #087c67;
+  --health-warning: #94620b;
+  --health-danger: #b44545;
+  --changed-bg: #fff0b9;
+  --changed-ink: #76500a;
+}
+:root[data-theme='dark'] {
+  color-scheme: dark;
+  --bg: #0e1828;
+  --surface: #182536;
+  --ink: #e5efff;
+  --muted: #a2b5cf;
+  --line: #34465e;
+  --teal: #8ebfff;
+  --primary: #2f6cda;
+  --soft: #243b59;
+  --focus: #91c4ff;
+  --shadow: none;
+  --health-good: #63ddbf;
+  --health-warning: #ffd17b;
+  --health-danger: #ff9d9d;
+  --changed-bg: #655022;
+  --changed-ink: #ffe8a1;
+}
+body {
+  color: var(--ink);
+  background: var(--bg);
+}
+input,
+select,
+textarea {
+  caret-color: var(--ink);
+}
+input::placeholder,
+textarea::placeholder {
+  color: var(--muted);
+  opacity: 0.85;
+}
+input:focus,
+select:focus,
+textarea:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 20%, transparent);
+}
+button:focus-visible,
+a:focus-visible {
+  outline-color: var(--focus);
+}
+.button {
+  background: var(--primary);
+}
+.button.secondary {
+  background: var(--surface);
+  color: var(--ink);
+}
+.button.danger {
+  background: #b64242;
+  color: #fff;
+}
+.hex-byte:focus,
+.ascii-byte:focus {
+  background: var(--soft);
+  color: var(--ink);
+  border-color: var(--focus) !important;
+}
+.hex-byte.changed,
+.ascii-byte.changed {
+  background: var(--changed-bg);
+  color: var(--changed-ink);
+}
+.theme-control {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--muted);
+}
+.theme-control select {
+  font-size: 12px;
+  padding: 7px 9px;
+  min-height: 34px;
+  cursor: pointer;
+}
+.login-screen {
+  background: var(--surface);
+}
+.login-form,
+.login-form .field {
+  color: var(--ink);
+}
+.login-form > p,
+.login-form > small {
+  color: var(--muted);
+}
+.login-art .brand,
+.force-password .brand {
+  color: #fff;
+}
+.login-art .brand b,
+.force-password .brand b {
+  color: #d4e6ff;
+}
+.login-art .brand small,
+.force-password .brand small,
+.login-message .eyebrow {
+  color: #c6dcff;
+}
+[data-theme='dark'] aside {
+  background: var(--surface);
+  color: var(--muted);
+  border-color: var(--line);
+}
+[data-theme='dark'] .brand {
+  color: var(--ink);
+}
+[data-theme='dark'] .brand b {
+  color: var(--teal);
+}
+[data-theme='dark'] .brand small,
+[data-theme='dark'] .nav-label {
+  color: var(--muted);
+}
+[data-theme='dark'] .brand-icon {
+  color: var(--teal);
+  background: var(--soft);
+  border-color: var(--line);
+}
+[data-theme='dark'] nav button {
+  color: var(--muted);
+}
+[data-theme='dark'] nav button:hover {
+  color: var(--ink);
+  background: var(--soft);
+}
+[data-theme='dark'] nav button.active {
+  background: var(--soft);
+  color: var(--teal);
+  box-shadow: inset 3px 0 var(--primary);
+}
+[data-theme='dark'] nav button i {
+  background: var(--primary);
+  color: #fff;
+}
+[data-theme='dark'] .sidebar-bottom {
+  border-color: var(--line);
+}
+[data-theme='dark'] .sidebar-bottom,
+[data-theme='dark'] .sidebar-bottom small,
+[data-theme='dark'] .sidebar-bottom button,
+[data-theme='dark'] .connected,
+[data-theme='dark'] .connected > span:last-child {
+  color: var(--muted);
+}
+[data-theme='dark'] .avatar {
+  background: var(--soft);
+  color: var(--teal);
+}
+[data-theme='dark'] .eyebrow,
+[data-theme='dark'] footer {
+  color: var(--muted);
+}
+[data-theme='dark'] .stat strong {
+  color: var(--ink);
+}
+[data-theme='dark'] .stat svg,
+[data-theme='dark'] .panel-head h3 svg {
+  color: var(--teal);
+}
+[data-theme='dark'] .device-hero {
+  background: linear-gradient(125deg, #1c3453, #244469);
+  color: var(--ink);
+  border-color: var(--line);
+}
+[data-theme='dark'] .hero-copy h2 {
+  color: var(--ink);
+}
+[data-theme='dark'] .hero-tags > span,
+[data-theme='dark'] .hero-tags .badge {
+  background: #284a73;
+  color: #d4e6ff;
+  border-color: #527ca6;
+}
+[data-theme='dark'] .hero-metrics small,
+[data-theme='dark'] .hero-metrics em,
+[data-theme='dark'] .device-path,
+[data-theme='dark'] .device-path span {
+  color: #bad3f4;
+}
+[data-theme='dark'] .device-path span {
+  border-color: #527ca6;
+}
+[data-theme='dark'] .quick-actions > button {
+  color: var(--ink);
+}
+[data-theme='dark'] .region-icon,
+[data-theme='dark'] .region-icon.user,
+[data-theme='dark'] .region-icon.boot0,
+[data-theme='dark'] .region-icon.boot1 {
+  background: var(--soft);
+  color: var(--teal);
+}
+[data-theme='dark'] .region-icon.warning {
+  background: #4b3821;
+  color: var(--health-warning);
+}
+[data-theme='dark'] .region-card:hover:not(.muted) {
+  border-color: var(--focus);
+  background: var(--soft);
+}
+[data-theme='dark'] .region-segment {
+  background: #263e60;
+  color: var(--ink);
+  border-color: #52739d;
+}
+[data-theme='dark'] .region-segment small {
+  color: #c0d6f4;
+}
+[data-theme='dark'] .region-segment.selected {
+  background: #255fb3;
+  color: #fff;
+  border-color: #8ebfff;
+  box-shadow: inset 0 0 0 2px #8ebfff;
+}
+[data-theme='dark'] .region-segment.selected small {
+  color: #f0f6ff;
+}
+[data-theme='dark'] .user-region-rail .region-segment.selected {
+  box-shadow: inset 0 0 0 3px #d3e6ff;
+}
+[data-theme='dark'] .badge {
+  background: var(--soft);
+  color: #c2d7f4;
+}
+[data-theme='dark'] .badge.teal {
+  background: #203f63;
+  color: #a8d0ff;
+}
+[data-theme='dark'] .badge.amber {
+  background: #4b3821;
+  color: var(--health-warning);
+}
+[data-theme='dark'] .badge.red {
+  background: #4e2c36;
+  color: var(--health-danger);
+}
+[data-theme='dark'] .job-icon {
+  background: var(--soft);
+  color: var(--teal);
+}
+[data-theme='dark'] .job-icon.completed {
+  background: #173e37;
+  color: var(--health-good);
+}
+[data-theme='dark'] .job-icon.failed,
+[data-theme='dark'] .job-icon.interrupted {
+  background: #4e2c36;
+  color: var(--health-danger);
+}
+[data-theme='dark'] .danger-icon {
+  color: var(--health-danger);
+}
+[data-theme='dark'] .alert.error,
+[data-theme='dark'] .job-error {
+  background: #402731;
+  color: #ffb8bb;
+  border-color: #765060;
+}
+[data-theme='dark'] .alert.success {
+  background: #17392f;
+  color: #a9edd4;
+  border-color: #3d6a58;
+}
+[data-theme='dark'] .backup-intro {
+  background: linear-gradient(130deg, #1e3350, #253e60);
+}
+[data-theme='dark'] .backup-intro h2 {
+  color: var(--ink);
+}
+[data-theme='dark'] .backup-intro p,
+[data-theme='dark'] .backup-intro > div:not(.backup-graphic) {
+  color: var(--muted);
+}
+[data-theme='dark'] .backup-graphic {
+  color: var(--teal);
+}
+[data-theme='dark'] .backup-graphic > svg:last-child {
+  background: #253e60;
+}
+[data-theme='dark'] .transfer-flow,
+[data-theme='dark'] .file-name svg,
+[data-theme='dark'] .upload-drop {
+  color: var(--muted);
+}
+[data-theme='dark'] .upload-drop {
+  border-color: #597390;
+}
+[data-theme='dark'] .login-art,
+[data-theme='dark'] .force-password {
+  background: linear-gradient(140deg, #183457, #234b79);
+}
+[data-theme='dark'] .login-art .brand,
+[data-theme='dark'] .force-password .brand {
+  color: #fff;
+}
+[data-theme='dark'] .login-art .brand b,
+[data-theme='dark'] .force-password .brand b {
+  color: #d4e6ff;
+}
+[data-theme='dark'] .hex-byte.changed,
+[data-theme='dark'] .ascii-byte.changed {
+  background: var(--changed-bg);
+  color: var(--changed-ink);
+}
+@media (max-width: 620px) {
+  .header-actions {
+    gap: 8px;
+  }
+  .header-actions .avatar {
+    display: none;
+  }
+  .theme-control {
+    gap: 4px;
+  }
+  .theme-control select {
+    font-size: 11px;
+    padding: 7px 6px;
+  }
+  [data-theme='dark'] nav button.active {
+    border-top-color: var(--primary);
+    box-shadow: none;
+  }
+}
+
+/* Workspace navigation groups: full labels on desktop, separators on compact rails. */
+.app-shell > aside {
+  padding-top: 22px;
+  padding-bottom: 18px;
+}
+.app-shell > aside > .brand,
+.sidebar-bottom {
+  flex-shrink: 0;
+}
+.nav-label {
+  margin: 22px 12px 12px;
+}
+.workspace-nav {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  gap: 12px;
+  margin: 0;
+  padding-bottom: 12px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.nav-group {
+  min-width: 0;
+}
+.nav-group-title {
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  color: var(--muted);
+  margin: 0 12px 7px;
+  line-height: 16px;
+}
+.nav-group-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.workspace-nav button {
+  width: 100%;
+  padding: 8px 12px;
+  gap: 11px;
+  min-height: 35px;
+  flex-shrink: 0;
+}
+.workspace-nav button svg {
+  flex-shrink: 0;
+}
+.sidebar-bottom {
+  padding: 12px 10px 0;
+}
+.sidebar-bottom > button {
+  margin-top: 12px;
+}
+@media (max-width: 900px) {
+  .nav-group-title {
+    display: none;
+  }
+  .workspace-nav {
+    margin-top: 24px;
+    gap: 14px;
+    padding-bottom: 0;
+  }
+  .nav-group + .nav-group {
+    border-top: 1px solid var(--line);
+    padding-top: 14px;
+  }
+  .workspace-nav button {
+    padding: 9px 0;
+  }
+  .nav-group-buttons {
+    gap: 5px;
+  }
+}
+@media (max-width: 620px) {
+  .app-shell > aside {
+    padding: 0 7px;
+  }
+  .workspace-nav {
+    flex: none;
+    flex-direction: row;
+    gap: 0;
+    margin: 0;
+    padding: 0;
+    overflow: visible;
+    min-height: 64px;
+  }
+  .nav-group {
+    display: flex;
+    flex: 3;
+    height: 100%;
+    min-width: 0;
+  }
+  .nav-group:nth-child(2) {
+    flex: 5;
+  }
+  .nav-group + .nav-group {
+    border-top: 0;
+    border-left: 1px solid var(--line);
+    padding: 0;
+    margin-left: 3px;
+    padding-left: 3px;
+  }
+  .nav-group-buttons {
+    flex: 1;
+    flex-direction: row;
+    gap: 0;
+    min-width: 0;
+  }
+  .workspace-nav button {
+    flex: 1;
+    min-width: 0;
+    width: auto;
+    height: 100%;
+    padding: 0;
+    gap: 0;
+    border-radius: 0;
+  }
+  .workspace-nav button svg {
+    width: 17px;
+  }
+}
