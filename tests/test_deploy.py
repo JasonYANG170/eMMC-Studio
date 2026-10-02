@@ -1,5 +1,6 @@
 import json
 import sqlite3
+import socket
 import sys
 import tempfile
 import unittest
@@ -7,10 +8,33 @@ from pathlib import Path
 from contextlib import closing
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "deploy"))
-from check_ready import check_jobs
+from check_ready import check_jobs, check_port
 
 
 class DeploymentChecks(unittest.TestCase):
+    @unittest.skipUnless(sys.platform.startswith("linux"), "Linux port semantics")
+    def test_active_listener_still_refuses_upgrade(self):
+        with socket.socket() as listener:
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            listener.bind(("127.0.0.1", 0))
+            listener.listen()
+            with self.assertRaises(RuntimeError):
+                check_port(listener.getsockname()[1])
+
+    @unittest.skipUnless(sys.platform.startswith("linux"), "Linux port semantics")
+    def test_closed_http_time_wait_does_not_block_upgrade(self):
+        with socket.socket() as listener:
+            listener.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            listener.bind(("127.0.0.1", 0))
+            port = listener.getsockname()[1]
+            listener.listen()
+            with socket.create_connection(("127.0.0.1", port)) as client:
+                accepted, _ = listener.accept()
+                accepted.shutdown(socket.SHUT_WR)
+                accepted.close()
+                self.assertEqual(client.recv(1), b"")
+        check_port(port)
+
     def test_busy_jobs_refuse_upgrade_without_modifying_history(self):
         with tempfile.TemporaryDirectory() as folder:
             database = Path(folder) / "jobs.sqlite"
