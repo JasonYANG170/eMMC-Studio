@@ -149,3 +149,7 @@ sudo journalctl -u emmc-worker -b
 ```
 
 使用原有系统部署方法即可，无需另装 Python 包。命令不存在时检查安装版本和 `/usr/local/bin` 是否在 PATH 中；socket 连接失败时检查 worker 服务。CLI 不重置网页密码、不启动第二个工作进程，不自行绕过 disk identity、挂载状态或 BOOT 保护。
+
+## 独立应用升级
+
+串口或 SSH 可使用 `sudo emmc-studio upgrade check` 检测版本、`upgrade online` 在线升级、`upgrade import /path/eMMC-Studio-update.tar.gz` 离线升级、`upgrade status` 查看状态。支持 `--no-wait`、`--json` 和 `--dry-run`。同版本需在子命令后显式添加 `--reinstall`。详见 [应用升级教程](UPGRADE.md)。

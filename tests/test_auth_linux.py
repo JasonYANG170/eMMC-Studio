@@ -27,6 +27,13 @@ class AuthTests(unittest.TestCase):
     def test_01_unauthenticated_denied(self):
         self.assertEqual(self.client.get("/api/v1/devices").status_code, 401)
         self.assertEqual(self.client.get("/api/v1/system").status_code, 401)
+        self.assertEqual(self.client.get("/api/v1/upgrade").status_code, 401)
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/upgrade/install", json={"source": "online"}
+            ).status_code,
+            401,
+        )
 
     def test_02_setup_and_cookie(self):
         response = self.client.post(
@@ -40,6 +47,12 @@ class AuthTests(unittest.TestCase):
         self.assertFalse((Path(self.temp.name) / "setup.hash").exists())
 
     def test_03_csrf_and_cross_origin(self):
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/upgrade/install", json={"source": "online"}
+            ).status_code,
+            403,
+        )
         self.assertEqual(
             self.client.post("/api/v1/auth/logout", json={}).status_code, 403
         )

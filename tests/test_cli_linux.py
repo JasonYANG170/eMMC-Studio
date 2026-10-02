@@ -68,6 +68,25 @@ def main():
             return result.stderr
 
         source, target = loops
+        from cli import Client
+
+        root_client = Client(endpoint)
+        try:
+            manager.request({"method": "upgrade_freeze", "_root_peer": False})
+            raise AssertionError("unprivileged maintenance accepted")
+        except worker.StorageError:
+            pass
+        manager.busy.add("test-busy")
+        try:
+            root_client.rpc("upgrade_freeze")
+            raise AssertionError("busy maintenance accepted")
+        except Exception as error:
+            assert "任务" in str(error)
+        manager.busy.clear()
+        root_client.rpc("upgrade_freeze")
+        assert "升级" in command("partition", "table", source, "gpt", ok=False)
+        assert not manager.jobs()
+        root_client.rpc("upgrade_unfreeze")
         info = command("devices")
         assert {source, target} <= {d["path"] for d in info["disks"]}
         dry = command("--dry-run", "partition", "table", source, "gpt")
