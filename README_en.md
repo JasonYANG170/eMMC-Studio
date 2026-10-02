@@ -42,7 +42,7 @@ sudo apt-get install -y curl ca-certificates python3
 
 ## Method 1: One-command deployment (recommended)
 
-Release packages are built by GitHub Actions. The device **does not need Node.js and does not compile the frontend**. The script downloads a prebuilt package, verifies SHA-256, checks archive paths, and installs dependencies and two services enabled at boot.
+Release packages are built by GitHub Actions. The device **does not need Node.js and does not compile the frontend**. The script downloads a prebuilt package, verifies SHA-256, checks archive paths, and installs dependencies and three services enabled at boot (web, storage worker, and independent updater).
 
 Run in an SSH or serial terminal on the device:
 
@@ -149,7 +149,7 @@ The installer stages the new application, stops accepting tasks and checks again
 | `/run/emmc-worker/control.sock` | Restricted worker interface                                    |
 
 ```sh
-systemctl status emmc-worker emmc-web --no-pager
+systemctl status emmc-worker emmc-web emmc-updater --no-pager
 journalctl -u emmc-worker -u emmc-web -n 100 --no-pager
 sudo systemctl restart emmc-worker emmc-web
 ```
