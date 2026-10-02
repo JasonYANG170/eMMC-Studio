@@ -1,0 +1,23 @@
+[Unit]
+Description=eMMC Studio privileged storage worker
+After=local-fs.target
+[Service]
+Type=simple
+User=root
+Group=emmc-web
+WorkingDirectory=/opt/emmc-studio/backend
+ExecStart=/usr/bin/python3 /opt/emmc-studio/backend/worker.py
+Restart=on-failure
+RestartSec=3
+RuntimeDirectory=emmc-worker
+RuntimeDirectoryMode=0750
+StateDirectory=emmc-worker
+StateDirectoryMode=0750
+UMask=0027
+PrivateMounts=yes
+ProtectSystem=strict
+ReadWritePaths=/var/lib/emmc-worker /var/lib/emmc-web /run/emmc-worker /dev /sys
+ProtectHome=yes
+PrivateTmp=yes
+[Install]
+WantedBy=multi-user.target

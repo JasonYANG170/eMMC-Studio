@@ -1,0 +1,63 @@
+name: Validate and release
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020 # v7
+        with:
+          node-version: '22'
+          cache: npm
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - run: npm ci
+      - run: npm run format:check
+      - run: npm run build
+      - run: npm run test:frontend
+      - run: python -m pip install -r requirements-dev.txt
+      - run: python -m black --check backend deploy scripts tests
+      - name: Non-destructive Python checks
+        run: |
+          python tests/test_core.py
+          python tests/test_deploy.py
+          python tests/test_auth_linux.py
+          python tests/test_cache_linux.py
+          python tests/test_extcsd_lock.py
+      - name: Deployment shell validation
+        run: |
+          for script in install.sh deploy/install.sh deploy/uninstall.sh; do sh -n "$script"; done
+          shellcheck -S warning install.sh deploy/install.sh deploy/uninstall.sh
+      - run: python scripts/package_release.py
+      - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7
+        with:
+          name: emmc-studio-release
+          path: release/
+          retention-days: 14
+  release:
+    if: startsWith(github.ref, 'refs/tags/v')
+    needs: validate
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7
+      - uses: actions/download-artifact@37930b1c2abaa49bbe596cd826c3c89aef350131 # v7
+        with:
+          name: emmc-studio-release
+          path: release/
+      - name: Publish verified package
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          test "v$(cat VERSION)" = "$GITHUB_REF_NAME"
+          gh release create "$GITHUB_REF_NAME" release/eMMC-Studio.tar.gz release/SHA256SUMS \
+            --verify-tag --title "eMMC Studio $GITHUB_REF_NAME" --notes-file docs/RELEASE.md
