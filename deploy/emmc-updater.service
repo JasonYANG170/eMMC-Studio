@@ -1,0 +1,22 @@
+[Unit]
+Description=eMMC Studio signed application updater
+After=network-online.target emmc-worker.service
+Wants=network-online.target
+[Service]
+Type=simple
+User=root
+Group=emmc-web
+WorkingDirectory=/usr/local/lib/emmc-studio-updater
+ExecStart=/usr/bin/python3 /usr/local/lib/emmc-studio-updater/updater.py
+Restart=on-failure
+RestartSec=3
+RuntimeDirectory=emmc-updater
+RuntimeDirectoryMode=0750
+StateDirectory=emmc-updater
+StateDirectoryMode=0700
+UMask=0027
+ProtectHome=yes
+PrivateTmp=yes
+MemoryMax=384M
+[Install]
+WantedBy=multi-user.target

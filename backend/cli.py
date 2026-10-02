@@ -314,6 +314,19 @@ def parser():
         )
         return item
 
+    upgrade = group("upgrade", "独立应用升级：在线 GitHub Release 或本地官方签名包")
+    upgrade.add_parser("check", help="在线检测最新版本")
+    upgrade.add_parser("status", help="当前版本与持久化升级状态")
+    for operation in ("online", "import"):
+        item = upgrade.add_parser(
+            operation, help="在线升级" if operation == "online" else "导入本地升级包"
+        )
+        if operation == "import":
+            item.add_argument("input", help="官方 eMMC-Studio-update.tar.gz")
+        item.add_argument(
+            "--reinstall", action="store_true", help="允许重新安装同版本；仍禁止降级"
+        )
+
     parts = group("partition", "分区表、建立/删除/修改分区、格式化和 ext4 调整")
     area(parts, "table", "建立分区表（会破坏现有布局）").add_argument(
         "table", choices=("gpt", "mbr")
@@ -422,6 +435,46 @@ def parser():
 
 def execute(client, args):
     command, action = args.command, getattr(args, "action", None)
+    if command == "upgrade":
+        updater = Client(
+            os.environ.get("EMMC_UPDATE_SOCKET", "/run/emmc-updater/control.sock")
+        )
+        if action in ("check", "status"):
+            return updater.rpc(action)
+        request = {
+            "source": "online" if action == "online" else "local",
+            "reinstall": args.reinstall,
+        }
+        if args.dry_run:
+            return {
+                "operation": "application_upgrade",
+                "request": request,
+                "submitted": False,
+            }
+        if action == "import":
+            from update_package import MAX_PACKAGE
+
+            with local_source(args.input) as source:
+                if os.fstat(source.fileno()).st_size > MAX_PACKAGE:
+                    raise CLIError("升级包不能超过 128 MiB")
+            request["upload"] = upload(args.input)
+        result = updater.rpc("install", request)
+        if args.no_wait:
+            return result
+        task_id = result["task"]["id"]
+        while True:
+            result = updater.rpc("status")
+            if result["task"].get("id") != task_id:
+                raise CLIError("升级任务状态已变化，请查看 upgrade status")
+            print(
+                f"{result['task'].get('progress', 0)}% {result['task']['phase']}",
+                file=sys.stderr,
+            )
+            if result["task"]["state"] != "running":
+                if result["task"]["state"] != "completed":
+                    raise CLIError(result["task"].get("error", result["task"]["phase"]))
+                return result
+            time.sleep(2)
     if command == "devices":
         return client.rpc("inventory")
     if command == "system":

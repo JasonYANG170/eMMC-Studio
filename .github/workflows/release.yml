@@ -33,6 +33,7 @@ jobs:
           python tests/test_cache_linux.py
           python tests/test_extcsd_lock.py
           python tests/test_cli.py
+          python tests/test_update.py
       - name: CLI loop-device integration
         run: |
           sudo apt-get update
@@ -62,10 +63,23 @@ jobs:
         with:
           name: emmc-studio-release
           path: release/
+      - uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97 # v7
+        with:
+          python-version: '3.12'
+      - name: Sign offline upgrade package
+        env:
+          EMMC_UPDATE_SIGNING_KEY: ${{ secrets.EMMC_UPDATE_SIGNING_KEY }}
+        run: |
+          test -n "$EMMC_UPDATE_SIGNING_KEY"
+          key=$(mktemp)
+          trap 'rm -f "$key"' EXIT
+          chmod 600 "$key"
+          printf '%s\n' "$EMMC_UPDATE_SIGNING_KEY" > "$key"
+          python scripts/package_update.py --key "$key"
       - name: Publish verified package
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           test "v$(cat VERSION)" = "$GITHUB_REF_NAME"
-          gh release create "$GITHUB_REF_NAME" release/eMMC-Studio.tar.gz release/SHA256SUMS \
+          gh release create "$GITHUB_REF_NAME" release/eMMC-Studio.tar.gz release/SHA256SUMS release/eMMC-Studio-update.tar.gz release/update-manifest.json release/update-manifest.sig \
             --verify-tag --title "eMMC Studio $GITHUB_REF_NAME" --notes-file docs/RELEASE.md

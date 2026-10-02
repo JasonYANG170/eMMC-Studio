@@ -20,7 +20,7 @@ command -v python3 >/dev/null || { echo '请先安装 python3。' >&2; exit 1; }
 if [ -e /usr/local/bin/emmc-studio ] || [ -L /usr/local/bin/emmc-studio ]; then
     [ ! -L /usr/local/bin/emmc-studio ] && [ -f /usr/local/bin/emmc-studio ] && grep -q '^# eMMC Studio CLI launcher$' /usr/local/bin/emmc-studio || { echo 'emmc-studio 命令已被其他文件占用，拒绝覆盖。' >&2; exit 1; }
 fi
-for file in dist/index.html backend/web.py backend/worker.py backend/cli.py docs/CLI.md deploy/emmc-studio-cli.sh deploy/initialize.py deploy/check_ready.py deploy/emmc-web.service deploy/emmc-worker.service README.md VERSION; do
+for file in dist/index.html backend/web.py backend/worker.py backend/cli.py docs/CLI.md deploy/emmc-studio-cli.sh deploy/initialize.py deploy/check_ready.py deploy/emmc-web.service deploy/emmc-worker.service deploy/emmc-updater.service backend/updater.py backend/update_package.py README.md VERSION; do
     [ -f "$file" ] || { echo "缺少 $file；源码需要先在电脑运行 npm ci && npm run build。" >&2; exit 1; }
 done
 exec 9>/run/lock/emmc-studio-install.lock
@@ -29,10 +29,10 @@ python3 deploy/check_ready.py
 [ "$check_only" = 0 ] || exit 0
 if [ "$skip_apt" = 0 ]; then
     apt-get update
-    DEBIAN_FRONTEND=noninteractive apt-get install -y python3-flask python3-waitress parted gdisk dosfstools exfatprogs ntfs-3g e2fsprogs mmc-utils psmisc util-linux
+    DEBIAN_FRONTEND=noninteractive apt-get install -y python3-flask python3-waitress parted gdisk dosfstools exfatprogs ntfs-3g e2fsprogs mmc-utils psmisc util-linux openssl
 fi
 python3 -c 'import flask, waitress'
-for tool in lsblk blockdev sfdisk partprobe sgdisk mkfs.ext4 e2fsck resize2fs mkfs.vfat mkfs.exfat mkfs.ntfs mmc fuser; do
+for tool in lsblk blockdev sfdisk partprobe sgdisk mkfs.ext4 e2fsck resize2fs mkfs.vfat mkfs.exfat mkfs.ntfs mmc fuser openssl; do
     command -v "$tool" >/dev/null || { echo "缺少依赖命令：$tool" >&2; exit 1; }
 done
 getent group emmc-web >/dev/null || groupadd --system emmc-web
@@ -60,7 +60,7 @@ cleanup() {
             if [ -d "$work/previous" ]; then
                 mv "$work/previous" /opt/emmc-studio || recovery_failed=1
             fi
-            for service in emmc-web emmc-worker; do
+            for service in emmc-web emmc-worker emmc-updater; do
                 if [ -f "$work/$service.service" ]; then
                     cp "$work/$service.service" "/etc/systemd/system/$service.service"
                 else
@@ -92,9 +92,9 @@ cp backend/*.py "$work/app/backend/"
 cp -R dist/. "$work/app/dist/"
 cp deploy/*.sh deploy/*.py deploy/*.service "$work/app/deploy/"
 cp README.md VERSION "$work/app/"
-cp docs/CLI.md "$work/app/docs/"
+cp docs/*.md "$work/app/docs/"
 chmod -R go-w "$work/app"
-for service in emmc-web emmc-worker; do
+for service in emmc-web emmc-worker emmc-updater; do
     [ ! -f "/etc/systemd/system/$service.service" ] || cp "/etc/systemd/system/$service.service" "$work/"
 done
 [ ! -f /usr/local/bin/emmc-studio ] || cp /usr/local/bin/emmc-studio "$work/emmc-studio-cli.sh"
@@ -118,6 +118,11 @@ systemctl is-active --quiet emmc-worker
 systemctl is-active --quiet emmc-web
 python3 -c 'import urllib.request; r=urllib.request.urlopen("http://127.0.0.1/api/v1/auth/status", timeout=10); assert r.status == 200'
 /usr/local/bin/emmc-studio --json devices >/dev/null
+install -d -m 0755 /usr/local/lib/emmc-studio-updater
+install -m 0644 backend/updater.py backend/update_package.py /usr/local/lib/emmc-studio-updater/
+systemctl enable emmc-updater
+# Keep the current upgrade task alive; new code loads on the next service start.
+systemctl start emmc-updater
 if [ -d "$work/previous" ]; then
     backup="/opt/emmc-studio.previous.$(date +%Y%m%d%H%M%S).$$"
     mv "$work/previous" "$backup"

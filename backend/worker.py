@@ -11,6 +11,8 @@ import re
 import shutil
 import socketserver
 import sqlite3
+import socket
+import struct
 import threading
 import time
 import uuid
@@ -40,6 +42,7 @@ class Manager:
         self.db_lock = threading.RLock()
         self.guard = threading.RLock()
         self.busy = set()
+        self.upgrade_frozen = False
         self.cancels = {}
         self.mounts = {}
         self.streams = StreamDownloads(self)
@@ -93,6 +96,8 @@ class Manager:
 
     def acquire(self, keys):
         with self.guard:
+            if self.upgrade_frozen or Path("/run/emmc-updater/maintenance").exists():
+                raise StorageError("应用正在升级，暂时不能提交存储操作")
             if set(keys) & self.busy:
                 raise StorageError("磁盘正在执行其他操作，请等待任务结束")
             self.busy.update(keys)
@@ -1204,6 +1209,22 @@ class Manager:
     def request(self, req):
         op = req.get("method")
         args = req.get("args", {})
+        if op in ("upgrade_freeze", "upgrade_unfreeze"):
+            if not req.get("_root_peer"):
+                raise StorageError("升级维护仅允许 root 工作进程调用")
+            with self.guard:
+                if op == "upgrade_freeze":
+                    with self.db_lock, self.connect() as connection:
+                        active = any(
+                            json.loads(row[0])["state"] in ("queued", "running")
+                            for row in connection.execute("SELECT data FROM jobs")
+                        )
+                    if self.busy or active:
+                        raise StorageError("存在进行中的磁盘任务，请完成后再升级")
+                    self.upgrade_frozen = True
+                else:
+                    self.upgrade_frozen = False
+            return {"ok": True}
         if op == "stream_prepare":
             with self.guard:
                 return self.streams.prepare(args)
@@ -1281,6 +1302,13 @@ class Handler(socketserver.StreamRequestHandler):
             if len(line) > 8 * 1024 * 1024:
                 raise StorageError("请求过大")
             req = json.loads(line)
+            req["_root_peer"] = (
+                struct.unpack(
+                    "3i",
+                    self.request.getsockopt(socket.SOL_SOCKET, socket.SO_PEERCRED, 12),
+                )[1]
+                == 0
+            )
             if req.get("method") == "stream_download":
                 self.server.manager.streams.send(req["args"]["token"], self.wfile)
                 return

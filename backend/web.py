@@ -65,10 +65,10 @@ def cache_serialized(fn):
     return wrapped
 
 
-def rpc(method, args=None):
+def rpc(method, args=None, socket_path=None):
     with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
         s.settimeout(180)
-        s.connect(SOCKET)
+        s.connect(socket_path or SOCKET)
         s.sendall(
             (
                 json.dumps({"method": method, "args": args or {}}, ensure_ascii=False)
@@ -575,6 +575,22 @@ def download(token):
     return response
 
 
+@app.get("/api/v1/upgrade")
+def upgrade_status():
+    return jsonify(rpc("status", socket_path="/run/emmc-updater/control.sock"))
+
+
+@app.post("/api/v1/upgrade/check")
+def upgrade_check():
+    return jsonify(rpc("check", socket_path="/run/emmc-updater/control.sock"))
+
+
+@app.post("/api/v1/upgrade/install")
+@cache_serialized
+def upgrade_install():
+    return jsonify(rpc("install", body(), socket_path="/run/emmc-updater/control.sock"))
+
+
 @app.get("/api/v1/settings")
 def settings():
     entries = []
@@ -587,7 +603,7 @@ def settings():
         username=auth_data()["username"],
         free=shutil.disk_usage(STATE).free,
         temporary=entries,
-        version="1.0.0",
+        version=(Path(__file__).resolve().parents[1] / "VERSION").read_text().strip(),
     )
 
 

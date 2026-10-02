@@ -2,6 +2,7 @@
 
 import argparse
 import hashlib
+import io
 import tarfile
 from pathlib import Path
 
@@ -15,7 +16,12 @@ def main():
     output.mkdir(parents=True, exist_ok=True)
     if not (root / "dist/index.html").is_file():
         parser.error("Run npm ci and npm run build first")
-    files = [root / "README.md", root / "VERSION", root / "docs/CLI.md"]
+    files = [
+        root / "README.md",
+        root / "VERSION",
+        root / "docs/CLI.md",
+        root / "docs/UPGRADE.md",
+    ]
     files += sorted((root / "backend").glob("*.py"))
     files += sorted(
         p for p in (root / "deploy").iterdir() if p.suffix in {".sh", ".py", ".service"}
@@ -32,8 +38,14 @@ def main():
             info.uid = info.gid = info.mtime = 0
             info.uname = info.gname = "root"
             info.mode = 0o755 if path.suffix == ".sh" else 0o644
-            with path.open("rb") as content:
-                package.addfile(info, content)
+            data = path.read_bytes()
+            if (
+                path.suffix in {".py", ".sh", ".service", ".md"}
+                or path.name == "VERSION"
+            ):
+                data = data.replace(b"\r\n", b"\n")
+            info.size = len(data)
+            package.addfile(info, io.BytesIO(data))
     with archive.open("rb") as stream:
         digest = hashlib.file_digest(stream, "sha256").hexdigest()
     (output / "SHA256SUMS").write_text(f"{digest}  {archive.name}\n", encoding="utf-8")

@@ -47,6 +47,7 @@ import { HexGrid } from './HexGrid';
 import { ResizeView } from './ResizeView';
 import { DiskDetails } from './DiskDetails';
 import { CacheCleaner } from './CacheCleaner';
+import { UpgradePage } from './UpgradePage';
 import { resizeLimit } from './layout';
 import { VolumeLabel } from './VolumeLabel';
 import { wantsDownload, readyDownloads } from './downloads';
@@ -172,12 +173,13 @@ const nav = [
   { id: 'backups', title: '备份库', icon: Archive },
   { id: 'jobs', title: '任务记录', icon: Activity },
   { id: 'cache', title: '缓存清理', icon: Trash2 },
+  { id: 'upgrade', title: '应用升级', icon: Download },
   { id: 'settings', title: '设置', icon: Settings },
 ];
 const navGroups = [
   { title: '设备与磁盘', ids: ['device', 'overview', 'diskdetails'] },
   { title: '数据操作', ids: ['partitions', 'files', 'hex', 'transfer', 'backups'] },
-  { title: '维护与设置', ids: ['jobs', 'cache', 'settings'] },
+  { title: '维护与设置', ids: ['jobs', 'cache', 'upgrade', 'settings'] },
 ].map((group) => ({ ...group, items: nav.filter((item) => group.ids.includes(item.id)) }));
 
 function App() {
@@ -328,6 +330,7 @@ function App() {
     if (!auth?.authenticated || auth.must_change) return;
     refresh();
     refreshBackups();
+    refreshSettings();
     api('/jobs').then((d) => setJobs(d.jobs));
     const timer = setInterval(refresh, 10000);
     const stream = new EventSource('/api/v1/events');
@@ -578,7 +581,7 @@ function App() {
             <span className="pulse" />
             设备在线 <span>R28S</span>
           </div>
-          <small>本地部署 · v1.0.0</small>
+          <small>本地部署 · v{settings?.version || '…'}</small>
           <button
             onClick={async () => {
               await post('/auth/logout', {});
@@ -642,6 +645,7 @@ function App() {
                       backups: '保存完整副本，让每次恢复都有据可查。',
                       jobs: '每一次读写，都有清晰的进度与结果。',
                       cache: '按类型选择记录与暂存文件，查看空间并安全清理。',
+                      upgrade: '检测官方版本或导入签名升级包，独立升级应用程序。',
                       settings: '管理访问密码和工作台设置。',
                     } as any
                   )[page]
@@ -707,7 +711,7 @@ function App() {
               </button>
             </div>
           )}
-          {!disk && !['jobs', 'settings', 'backups', 'cache'].includes(page) ? (
+          {!disk && !['jobs', 'settings', 'backups', 'cache', 'upgrade'].includes(page) ? (
             <Empty
               icon={HardDrive}
               title="未发现可管理的磁盘"
@@ -2132,6 +2136,7 @@ function App() {
                   }}
                 />
               )}
+              {page === 'upgrade' && <UpgradePage api={api} post={post} />}
               {page === 'settings' && (
                 <>
                   <div className="two-columns">
@@ -2192,7 +2197,7 @@ function App() {
                     <section className="panel">
                       <PanelHead icon={Settings} title="工作台信息" />
                       <dl className="details-grid single">
-                        <Detail label="版本" value="1.0.0" />
+                        <Detail label="版本" value={settings?.version || '读取中…'} />
                         <Detail label="访问端口" value="HTTP · 80" />
                         <Detail label="运行位置" value="NanoPi R28S · 本地设备" />
                         <Detail label="可用暂存空间" value={fmt(settings?.free || free)} />

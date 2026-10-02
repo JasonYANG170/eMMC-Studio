@@ -1,8 +1,8 @@
 #!/bin/sh
 set -eu
 [ "$(id -u)" = 0 ] || exit 1
-systemctl disable --now emmc-web emmc-worker
-rm -f /etc/systemd/system/emmc-web.service /etc/systemd/system/emmc-worker.service
+systemctl disable --now emmc-web emmc-worker emmc-updater
+rm -f /etc/systemd/system/emmc-web.service /etc/systemd/system/emmc-worker.service /etc/systemd/system/emmc-updater.service
 if [ ! -L /usr/local/bin/emmc-studio ] && [ -f /usr/local/bin/emmc-studio ] && grep -q '^# eMMC Studio CLI launcher$' /usr/local/bin/emmc-studio; then
     rm -f /usr/local/bin/emmc-studio
 fi
