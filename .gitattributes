@@ -4,4 +4,8 @@
 *.service text eol=lf
 *.yml text eol=lf
 *.md text eol=lf
+*.ts text eol=lf
+*.tsx text eol=lf
+*.css text eol=lf
+*.json text eol=lf
 *.png binary

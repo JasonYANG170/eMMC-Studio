@@ -91,7 +91,7 @@ install -d -m 0755 "$work/app/backend" "$work/app/dist" "$work/app/deploy" "$wor
 cp backend/*.py "$work/app/backend/"
 cp -R dist/. "$work/app/dist/"
 cp deploy/*.sh deploy/*.py deploy/*.service "$work/app/deploy/"
-cp README.md VERSION "$work/app/"
+cp README*.md VERSION "$work/app/"
 cp docs/*.md "$work/app/docs/"
 chmod -R go-w "$work/app"
 for service in emmc-web emmc-worker emmc-updater; do
