@@ -1,3 +1,4 @@
+import { t, locale } from './i18n.js';
 import { partitionColors, resizeLimit } from './layout';
 export function ResizeView({
   disk,
@@ -19,12 +20,14 @@ export function ResizeView({
     parts = disk.regions.filter((r) => r.region === 'partition');
   return (
     <div className="resize-view">
-      <strong>拖动右侧边界调整容量</strong>
+      <strong>{t('拖动右侧边界调整容量')}</strong>
       <p>
-        起点固定 · 当前 {(region.size / 1048576).toFixed(0)} MiB · 最大 {(max / 1048576).toFixed(0)}{' '}
-        MiB
+        {t('起点固定 · 当前')}
+        {(region.size / 1048576).toFixed(0)}
+        {t('MiB · 最大')}
+        {(max / 1048576).toFixed(0)} MiB
       </p>
-      <div className="resize-disk" aria-label="调整后的磁盘布局">
+      <div className="resize-disk" aria-label={t('调整后的磁盘布局')}>
         {parts.map((r, i) => (
           <div
             key={r.path}
@@ -42,7 +45,7 @@ export function ResizeView({
       <div className="resize-track">
         <div className="resize-fill" style={{ width: Math.min(100, (value / max) * 100) + '%' }} />
         <input
-          aria-label="拖动分区容量"
+          aria-label={t('拖动分区容量')}
           type="range"
           min={1048576}
           max={max}
@@ -57,8 +60,9 @@ export function ResizeView({
         <span>{(max / 1048576).toLocaleString()} MiB</span>
       </div>
       <small>
-        可调整区间：{start.toLocaleString()}–{(start + max).toLocaleString()}{' '}
-        字节；右侧相邻分区是扩容边界。拖动只改变预览，确认提交后才执行。
+        {t('可调整区间：')}
+        {start.toLocaleString()}–{(start + max).toLocaleString()}{' '}
+        {t('字节；右侧相邻分区是扩容边界。拖动只改变预览，确认提交后才执行。')}
       </small>
     </div>
   );

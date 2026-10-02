@@ -1,3 +1,4 @@
+import { t, locale, serverText } from './i18n.js';
 import { useEffect, useState } from 'react';
 import { Archive, Check, RefreshCw, Trash2, X } from 'lucide-react';
 type Item = {
@@ -13,10 +14,10 @@ type Item = {
   stamp: string;
 };
 const kinds: Record<string, string> = {
-  jobs: '任务记录',
-  snapshots: '操作前快照',
-  downloads: '导出文件',
-  uploads: '上传暂存',
+  jobs: t('任务记录'),
+  snapshots: t('操作前快照'),
+  downloads: t('导出文件'),
+  uploads: t('上传暂存'),
 };
 const bytes = (n: number) =>
   n >= 1073741824
@@ -28,12 +29,12 @@ const bytes = (n: number) =>
         : (n / 1048576).toFixed(2) + ' MiB';
 const key = (i: Item) => i.kind + ':' + i.id;
 const states: Record<string, string> = {
-  completed: '已完成',
-  failed: '失败',
-  cancelled: '已取消',
-  interrupted: '已中断',
-  running: '执行中',
-  queued: '等待中',
+  completed: t('已完成'),
+  failed: t('失败'),
+  cancelled: t('已取消'),
+  interrupted: t('已中断'),
+  running: t('执行中'),
+  queued: t('等待中'),
 };
 export function CacheCleaner({
   api,
@@ -93,9 +94,12 @@ export function CacheCleaner({
         items: chosen.map(({ kind, id, stamp }) => ({ kind, id, stamp })),
       });
       setNotice(
-        `已清理 ${result.removed.length} 项，文件释放 ${bytes(result.freed)}。` +
+        t('已清理 {0} 项，文件释放 {1}。', [result.removed.length, bytes(result.freed)]) +
           (result.skipped.length
-            ? ` ${result.skipped.length} 项因状态变化保留：${[...new Set(result.skipped.map((s: any) => s.reason))].join('；')}`
+            ? t(' {0} 项因状态变化保留：{1}', [
+                result.skipped.length,
+                [...new Set(result.skipped.map((s: any) => serverText(s.reason)))].join('；'),
+              ])
             : ''),
       );
       setDialog(false);
@@ -115,7 +119,7 @@ export function CacheCleaner({
           className={'button secondary small ' + (filter === 'all' ? 'active' : '')}
           onClick={() => setFilter('all')}
         >
-          全部
+          {t('全部')}
         </button>
         {Object.entries(kinds)
           .filter(([k]) => mode === 'all' || k === 'jobs')
@@ -132,7 +136,7 @@ export function CacheCleaner({
       <div className="cleanup-selection">
         <label className="checkbox">
           <input
-            aria-label="全选当前列表"
+            aria-label={t('全选当前列表')}
             type="checkbox"
             checked={
               visible.some((i) => !i.locked) &&
@@ -140,20 +144,23 @@ export function CacheCleaner({
             }
             onChange={(e) => toggle(visible, e.target.checked)}
           />
-          全选当前列表
+          {t('全选当前列表')}
         </label>
         <span>
-          已选择 {chosen.length} 项 · 文件 {bytes(size)}
+          {t('已选择')}
+          {chosen.length}
+          {t('项 · 文件')}
+          {bytes(size)}
         </span>
       </div>
       <div className="table-scroll cleanup-table">
         <table>
           <thead>
             <tr>
-              <th>选择 / 类型</th>
-              <th>名称 / 时间</th>
-              <th>目标 / 标识</th>
-              <th>占用 / 状态</th>
+              <th>{t('选择 / 类型')}</th>
+              <th>{t('名称 / 时间')}</th>
+              <th>{t('目标 / 标识')}</th>
+              <th>{t('占用 / 状态')}</th>
             </tr>
           </thead>
           <tbody>
@@ -162,7 +169,7 @@ export function CacheCleaner({
                 <td>
                   <label className="checkbox">
                     <input
-                      aria-label={'选择 ' + i.name + ' ' + i.id}
+                      aria-label={t('选择 ') + i.name + ' ' + i.id}
                       disabled={i.locked || loading}
                       type="checkbox"
                       checked={selected.has(key(i))}
@@ -174,7 +181,7 @@ export function CacheCleaner({
                 <td>
                   <b>{i.name}</b>
                   <small>
-                    {new Date(i.created * 1000).toLocaleString('zh-CN', { hour12: false })}
+                    {new Date(i.created * 1000).toLocaleString(locale, { hour12: false })}
                   </small>
                 </td>
                 <td>
@@ -182,14 +189,14 @@ export function CacheCleaner({
                   <small className="mono">{i.id}</small>
                 </td>
                 <td>
-                  {i.kind === 'jobs' ? '历史记录' : bytes(i.size)}
-                  <small>{i.locked ? i.reason : states[i.state] || '可清理'}</small>
+                  {i.kind === 'jobs' ? t('历史记录') : bytes(i.size)}
+                  <small>{i.locked ? serverText(i.reason) : states[i.state] || t('可清理')}</small>
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
-        {!visible.length && <p className="empty-note">没有可显示的项目。</p>}
+        {!visible.length && <p className="empty-note">{t('没有可显示的项目。')}</p>}
       </div>
     </>
   );
@@ -205,7 +212,7 @@ export function CacheCleaner({
         >
           {' '}
           <Trash2 size={14} />
-          清除任务记录
+          {t('清除任务记录')}
         </button>
       ) : (
         <>
@@ -216,10 +223,13 @@ export function CacheCleaner({
                 <button key={kind} className="panel cleanup-card" onClick={() => setFilter(kind)}>
                   <Archive size={21} />
                   <span>{label}</span>
-                  <b>{rows.length} 项</b>
+                  <b>
+                    {rows.length}
+                    {t('项')}
+                  </b>
                   <small>
                     {kind === 'jobs'
-                      ? '保留正在运行和等待的任务'
+                      ? t('保留正在运行和等待的任务')
                       : bytes(rows.reduce((n, i) => n + i.size, 0))}
                   </small>
                 </button>
@@ -228,26 +238,30 @@ export function CacheCleaner({
           </div>
           <section className="panel">
             <div className="panel-head">
-              <h3>选择清理项目</h3>
+              <h3>{t('选择清理项目')}</h3>
               <button className="button secondary small" disabled={loading} onClick={refresh}>
                 <RefreshCw size={14} />
-                刷新
+                {t('刷新')}
               </button>
             </div>
             <div className="info-strip">
-              清除任务记录仅移除历史及日志；快照删除后无法回退对应操作。正式备份在备份库管理。可用空间{' '}
+              {t(
+                '清除任务记录仅移除历史及日志；快照删除后无法回退对应操作。正式备份在备份库管理。可用空间',
+              )}{' '}
               {bytes(free)}。
             </div>
             {list}
             <div className="editor-footer">
-              <span>上传中的文件和存储任务使用的缓存会被保护。</span>
+              <span>{t('上传中的文件和存储任务使用的缓存会被保护。')}</span>
               <button
                 className="button danger"
                 disabled={loading || !chosen.length}
                 onClick={() => setDialog(true)}
               >
                 <Trash2 size={15} />
-                清理所选（{chosen.length}）
+                {t('清理所选（')}
+                {chosen.length}
+                {t('）')}
               </button>
             </div>
           </section>
@@ -261,14 +275,14 @@ export function CacheCleaner({
             className={'modal ' + (mode === 'jobs' ? 'cleanup-modal' : '')}
             role="dialog"
             aria-modal="true"
-            aria-label={mode === 'jobs' ? '清除任务记录' : '确认缓存清理'}
+            aria-label={mode === 'jobs' ? t('清除任务记录') : t('确认缓存清理')}
           >
             <div className="modal-title">
               <Trash2 size={22} />
-              <h2>{mode === 'jobs' ? '清除任务记录' : '确认缓存清理'}</h2>
+              <h2>{mode === 'jobs' ? t('清除任务记录') : t('确认缓存清理')}</h2>
               <button
                 className="icon-button"
-                aria-label="关闭清理窗口"
+                aria-label={t('关闭清理窗口')}
                 disabled={loading}
                 onClick={() => setDialog(false)}
               >
@@ -284,17 +298,23 @@ export function CacheCleaner({
                   return n ? (
                     <p key={kind}>
                       {label}
-                      <b>{n} 项</b>
+                      <b>
+                        {n}
+                        {t('项')}
+                      </b>
                     </p>
                   ) : null;
                 })}
                 <p>
-                  文件预计释放<b>{bytes(size)}</b>
+                  {t('文件预计释放')}
+                  <b>{bytes(size)}</b>
                 </p>
               </div>
             )}
             <p className="modal-note">
-              清理后无法恢复。清除快照会失去相应操作的回退数据；正在运行或等待的任务保留。执行前会再次核对项目状态。
+              {t(
+                '清理后无法恢复。清除快照会失去相应操作的回退数据；正在运行或等待的任务保留。执行前会再次核对项目状态。',
+              )}
             </p>
             {error && <div className="alert error">{error}</div>}
             <div className="modal-buttons">
@@ -303,7 +323,7 @@ export function CacheCleaner({
                 disabled={loading}
                 onClick={() => setDialog(false)}
               >
-                取消
+                {t('取消')}
               </button>
               <button
                 className="button danger"
@@ -311,7 +331,7 @@ export function CacheCleaner({
                 onClick={execute}
               >
                 <Check size={16} />
-                {loading ? '正在清理…' : `确认清理 ${chosen.length} 项`}
+                {loading ? t('正在清理…') : t('确认清理 {0} 项', [chosen.length])}
               </button>
             </div>
           </section>

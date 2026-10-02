@@ -1,3 +1,4 @@
+import { t, locale } from './i18n.js';
 import { useEffect, useState } from 'react';
 import { byteUnits, ByteUnit, fromBytes, toBytes } from './units';
 
@@ -35,14 +36,14 @@ export function ByteInput({
             aria-label={label}
             value={raw}
             aria-invalid={!valid}
-            placeholder={unit === 'B' ? '字节数或 0x 十六进制' : '数值'}
+            placeholder={unit === 'B' ? t('字节数或 0x 十六进制') : t('数值')}
             onChange={(e) => {
               setRaw(e.target.value);
               onChange(toBytes(e.target.value, unit));
             }}
           />
           <select
-            aria-label={label + '单位'}
+            aria-label={label + t('单位')}
             value={unit}
             onChange={(e) => {
               const next = e.target.value as ByteUnit;
@@ -52,7 +53,7 @@ export function ByteInput({
           >
             {Object.keys(byteUnits).map((u) => (
               <option key={u} value={u}>
-                {u === '扇区' ? '扇区（512 B）' : u}
+                {u === '扇区' ? t('扇区（512 B）') : u}
               </option>
             ))}
           </select>
@@ -60,12 +61,18 @@ export function ByteInput({
       </label>
       <small aria-live="polite">
         {valid
-          ? `${bytes.toLocaleString('zh-CN')} 字节 · 0x${bytes.toString(16).toUpperCase()}${alignment > 1 ? ' · ' + (bytes / 512).toLocaleString('zh-CN') + ' 扇区（1 MiB 对齐）' : ''}`
+          ? t('{0} 字节 · 0x{1}{2}', [
+              bytes.toLocaleString(locale),
+              bytes.toString(16).toUpperCase(),
+              alignment > 1
+                ? ' · ' + (bytes / 512).toLocaleString(locale) + ' ' + t('扇区（1 MiB 对齐）')
+                : '',
+            ])
           : Number.isSafeInteger(bytes)
             ? bytes % alignment !== 0
-              ? '需按 1 MiB 对齐，请填写整数个 MiB'
-              : `允许 ${min.toLocaleString('zh-CN')}–${max.toLocaleString('zh-CN')} 字节`
-            : '请输入可换算为整数个字节的非负数值'}
+              ? t('需按 1 MiB 对齐，请填写整数个 MiB')
+              : t('允许 {0}–{1} 字节', [min.toLocaleString(locale), max.toLocaleString(locale)])
+            : t('请输入可换算为整数个字节的非负数值')}
       </small>
     </div>
   );

@@ -24,6 +24,7 @@ def main():
         root / "docs/UPGRADE.md",
     ]
     files += sorted((root / "backend").glob("*.py"))
+    files += sorted((root / "backend/locales").glob("*.json"))
     files += sorted(
         p for p in (root / "deploy").iterdir() if p.suffix in {".sh", ".py", ".service"}
     )
