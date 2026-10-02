@@ -79,16 +79,14 @@ export function UpgradePage({ api, post }: Props) {
         <p className="muted">
           升级只更新应用程序。有进行中的磁盘任务时会拒绝安装；关闭浏览器不会取消升级。
         </p>
-        <label className="field">
-          <span>
-            <input
-              type="checkbox"
-              checked={reinstall}
-              onChange={(e) => setReinstall(e.target.checked)}
-              disabled={disabled}
-            />{' '}
-            允许重新安装同版本
-          </span>
+        <label className="upgrade-choice">
+          <input
+            type="checkbox"
+            checked={reinstall}
+            onChange={(e) => setReinstall(e.target.checked)}
+            disabled={disabled}
+          />{' '}
+          允许重新安装同版本
         </label>
       </section>
       <div className="two-columns">

@@ -150,10 +150,10 @@ class Updates:
 
     def install(self, args):
         folder = STATE / self.data["id"]
-        folder.mkdir(mode=0o700)
         marker = RUNTIME / "maintenance"
         frozen = False
         try:
+            folder.mkdir(mode=0o700)
             if (
                 shutil.disk_usage(STATE).free < 768 * 1024 * 1024
                 or shutil.disk_usage("/opt").free < 768 * 1024 * 1024
