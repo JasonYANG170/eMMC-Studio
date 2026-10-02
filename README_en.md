@@ -12,11 +12,11 @@ Serial and SSH command-line access is available from version 1.1.0: `sudo emmc-s
 
 ## Features
 
-| Section | Pages and capabilities |
-| ---------- | ----------------------------------------------------------------------------------------------- |
-| Devices and disks | CPU, memory, temperature, disk, and network dashboards; disk overview; identifiers, CID manufacturer, EXT_CSD, lifetime ranges, and transfer protocols |
-| Data operations | GPT/MBR management, formatting, offline ext4 resizing with drag previews; file management; HEX/ASCII sector editing; cloning and recovery; backup library |
-| Maintenance and settings | Persistent tasks, progress, and cancellation; separate cache cleanup; password and theme settings |
+| Section                  | Pages and capabilities                                                                                                                                    |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Devices and disks        | CPU, memory, temperature, disk, and network dashboards; disk overview; identifiers, CID manufacturer, EXT_CSD, lifetime ranges, and transfer protocols    |
+| Data operations          | GPT/MBR management, formatting, offline ext4 resizing with drag previews; file management; HEX/ASCII sector editing; cloning and recovery; backup library |
+| Maintenance and settings | Persistent tasks, progress, and cancellation; separate cache cleanup; password and theme settings                                                         |
 
 - The system SD card cannot be selected as a write, format, or recovery target. eMMC is identified by CID and device topology rather than a fixed `mmcblk2` name.
 - The user area and both BOOT areas are displayed separately, each with its own address space. Software read-only protection is restored after BOOT writes complete or fail.
@@ -71,12 +71,12 @@ Check only the package, system environment, task state, and port:
 sudo sh /tmp/emmc-studio-install.sh --check
 ```
 
-| Option | Description |
-| --------------------- | ------------------------------------ |
-| `--version v1.0.0` | Install the specified release; defaults to the latest stable release |
+| Option                | Description                                                          |
+| --------------------- | -------------------------------------------------------------------- |
+| `--version v1.0.0`    | Install the specified release; defaults to the latest stable release |
 | `--download-only DIR` | Download the verified package and manifest without changing services |
-| `--check` | Download, verify, and perform predeployment checks only |
-| `--help` | Show usage |
+| `--check`             | Download, verify, and perform predeployment checks only              |
+| `--help`              | Show usage                                                           |
 
 If a release package is not available yet, wait for [Actions](https://github.com/JasonYANG170/eMMC-Studio/actions) to finish or deploy from source. SHA-256 verifies download integrity; trust in the publisher still relies on this repository and HTTPS.
 
@@ -139,14 +139,14 @@ The installer stages the new application, stops accepting tasks and checks again
 
 ### Paths and logs
 
-| Path | Contents |
-| ------------------------------- | ------------------------------------ |
-| `/opt/emmc-studio/backend` | Python service source |
-| `/opt/emmc-studio/dist` | Built web interface |
-| `/opt/emmc-studio/deploy` | Installation, checking, initialization, and removal scripts |
-| `/var/lib/emmc-web` | Administrator hash, session keys, uploads, and history exports |
-| `/var/lib/emmc-worker` | Backups, snapshots, and SQLite task records |
-| `/run/emmc-worker/control.sock` | Restricted worker interface |
+| Path                            | Contents                                                       |
+| ------------------------------- | -------------------------------------------------------------- |
+| `/opt/emmc-studio/backend`      | Python service source                                          |
+| `/opt/emmc-studio/dist`         | Built web interface                                            |
+| `/opt/emmc-studio/deploy`       | Installation, checking, initialization, and removal scripts    |
+| `/var/lib/emmc-web`             | Administrator hash, session keys, uploads, and history exports |
+| `/var/lib/emmc-worker`          | Backups, snapshots, and SQLite task records                    |
+| `/run/emmc-worker/control.sock` | Restricted worker interface                                    |
 
 ```sh
 systemctl status emmc-worker emmc-web --no-pager
@@ -208,3 +208,9 @@ sudo python3 tests/test_stream_linux.py
 ```
 
 See [docs/VALIDATION.md](docs/VALIDATION.md) for validation coverage and [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) for permissions and workflows. For a release, update VERSION and push the corresponding `v<version>` tag. After validation, Actions produces the installation package and SHA-256 manifest.
+
+## Application updates
+
+Starting with 1.2.0, open **Maintenance → Application upgrade** to check official GitHub Releases or import `eMMC-Studio-update.tar.gz` for offline installation. Both routes verify Ed25519 signatures and preserve administrators, backups and job history. Active storage jobs prevent installation.
+
+Serial/SSH commands: `sudo emmc-studio upgrade check`, `sudo emmc-studio upgrade online`, `sudo emmc-studio upgrade import /path/eMMC-Studio-update.tar.gz`, and `sudo emmc-studio upgrade status`. Existing 1.0.x/1.1.x installations must first bootstrap the update service using the deployment script. See [the upgrade guide](docs/UPGRADE.md) for details.

@@ -18,6 +18,7 @@ def main():
         parser.error("Run npm ci and npm run build first")
     files = [
         root / "README.md",
+        root / "README_en.md",
         root / "VERSION",
         root / "docs/CLI.md",
         root / "docs/UPGRADE.md",

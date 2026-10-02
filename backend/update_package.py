@@ -132,7 +132,9 @@ def unpack(package, destination, current, reinstall=False):
             if total > MAX_EXPANDED or len(seen) > 4096:
                 raise ValueError("程序包解压后超出限制")
             relative = str(path.relative_to("eMMC-Studio"))
-            if relative not in {"README.md", "VERSION"} and path.parts[1] not in {
+            if relative not in {"README.md", "README_en.md", "VERSION"} and path.parts[
+                1
+            ] not in {
                 "backend",
                 "deploy",
                 "docs",
