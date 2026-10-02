@@ -214,3 +214,19 @@ sudo python3 tests/test_stream_linux.py
 1.2.0 起可在 **维护与设置 → 应用升级** 中检查 GitHub Release 并升级，也可导入官方 `eMMC-Studio-update.tar.gz` 离线升级。串口终端支持 `sudo emmc-studio upgrade check`、`upgrade online`、`upgrade import /path/eMMC-Studio-update.tar.gz` 和 `upgrade status`。升级包经过官方签名验证；保留管理员、备份和任务数据，存在磁盘任务时拒绝安装。
 
 首次部署或旧版初始化仍使用上方部署脚本。具体操作、回滚和 CI 签名说明见 [应用升级教程](docs/UPGRADE.md)。
+
+## 中英双语（1.3.0）
+
+网页右上角及登录页提供语言切换：**简体中文 / English / 跟随浏览器**。首次访问按浏览器首选语言选择，中文语言环境显示中文，其他语言显示英文；手动选择保存在当前浏览器。切换会重新加载界面并保留当前工作页面，未保存的文件或字节编辑会提示确认；已提交的后台任务继续运行。
+
+串口 / SSH 的语言参数放在子命令前：
+
+```sh
+sudo emmc-studio --lang zh-CN devices
+sudo emmc-studio --lang en devices
+sudo emmc-studio --lang en upgrade check
+sudo emmc-studio --lang auto --help
+EMMC_STUDIO_LANG=en sudo -E emmc-studio --help
+```
+
+CLI 自动模式依次读取 `EMMC_STUDIO_LANG`、`LC_ALL`、`LC_MESSAGES`、`LANG`；显式 `--lang` 优先。`C/POSIX` 或未配置语言时使用英文。命令名、参数、文件名、路径、寄存器原值和 `--json` 的机器数据保持原样；已知阶段及错误提示按所选语言显示，外部工具原始日志不做推测翻译。新增翻译请修改 `backend/locales/en.json` 并运行 `python scripts/generate_locales.py`，CI 会检查两端翻译同步和参数占位符。

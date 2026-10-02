@@ -89,6 +89,7 @@ trap cleanup EXIT
 trap 'exit 1' HUP INT TERM
 install -d -m 0755 "$work/app/backend" "$work/app/dist" "$work/app/deploy" "$work/app/docs"
 cp backend/*.py "$work/app/backend/"
+cp -R backend/locales "$work/app/backend/"
 cp -R dist/. "$work/app/dist/"
 cp deploy/*.sh deploy/*.py deploy/*.service "$work/app/deploy/"
 cp README*.md VERSION "$work/app/"

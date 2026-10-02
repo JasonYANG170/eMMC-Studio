@@ -214,3 +214,19 @@ See [docs/VALIDATION.md](docs/VALIDATION.md) for validation coverage and [docs/A
 Starting with 1.2.0, open **Maintenance → Application upgrade** to check official GitHub Releases or import `eMMC-Studio-update.tar.gz` for offline installation. Both routes verify Ed25519 signatures and preserve administrators, backups and job history. Active storage jobs prevent installation.
 
 Serial/SSH commands: `sudo emmc-studio upgrade check`, `sudo emmc-studio upgrade online`, `sudo emmc-studio upgrade import /path/eMMC-Studio-update.tar.gz`, and `sudo emmc-studio upgrade status`. Existing 1.0.x/1.1.x installations must first bootstrap the update service using the deployment script. See [the upgrade guide](docs/UPGRADE.md) for details.
+
+## Chinese and English (1.3.0)
+
+The web header and sign-in page offer **简体中文 / English / Browser language**. The first visit uses your preferred browser language; Chinese locales select Simplified Chinese and other locales select English. Manual selection is saved in the current browser. Switching reloads the interface and preserves the current workspace page; unsaved file or byte edits require confirmation. Submitted background tasks keep running.
+
+Place CLI language options before the command:
+
+```sh
+sudo emmc-studio --lang en devices
+sudo emmc-studio --lang zh-CN devices
+sudo emmc-studio --lang en upgrade check
+sudo emmc-studio --lang auto --help
+EMMC_STUDIO_LANG=en sudo -E emmc-studio --help
+```
+
+CLI automatic selection checks `EMMC_STUDIO_LANG`, then `LC_ALL`, `LC_MESSAGES` and `LANG`. An explicit `--lang` takes priority. C/POSIX or an unset locale uses English. Commands, parameters, file names, paths, raw registers and machine data from `--json` remain unchanged. Known status and error messages are localized; raw external-tool logs are preserved. Edit `backend/locales/en.json` and run `python scripts/generate_locales.py` to add translations. CI checks catalogue synchronization and interpolation parameters.

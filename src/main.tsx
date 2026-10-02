@@ -1,3 +1,5 @@
+import { t, locale, serverText } from './i18n.js';
+import { LanguageSelector } from './LanguageSelector';
 import React, { useEffect, useState, useRef } from 'react';
 import { createRoot } from 'react-dom/client';
 import {
@@ -123,7 +125,7 @@ async function api(path: string, options: RequestInit = {}) {
     },
   });
   const data = await res.json();
-  if (!res.ok) throw new Error(data.error || '请求失败');
+  if (!res.ok) throw new Error(serverText(data.error || t('请求失败')));
   return data;
 }
 const post = (path: string, data: any) => api(path, { method: 'POST', body: JSON.stringify(data) });
@@ -142,50 +144,50 @@ const fmt = (n: number) => {
   } while (n >= 1024 && i < 3);
   return n.toFixed(n >= 100 ? 0 : 2) + ' ' + u[i];
 };
-const date = (n: number) => new Date(n * 1000).toLocaleString('zh-CN', { hour12: false });
+const date = (n: number) => new Date(n * 1000).toLocaleString(locale, { hour12: false });
 const names: Record<string, string> = {
-  user: '用户区',
+  user: t('用户区'),
   boot0: 'BOOT0',
   boot1: 'BOOT1',
-  partition: '文件系统分区',
-  sd: '系统 SD 卡',
+  partition: t('文件系统分区'),
+  sd: t('系统 SD 卡'),
   emmc: 'eMMC',
-  usb: 'USB 存储',
-  disk: '磁盘',
-  loop: '测试磁盘',
+  usb: t('USB 存储'),
+  disk: t('磁盘'),
+  loop: t('测试磁盘'),
 };
 const states: Record<string, string> = {
-  queued: '等待中',
-  running: '执行中',
-  completed: '已完成',
-  failed: '失败',
-  cancelled: '已取消',
-  interrupted: '已中断',
+  queued: t('等待中'),
+  running: t('执行中'),
+  completed: t('已完成'),
+  failed: t('失败'),
+  cancelled: t('已取消'),
+  interrupted: t('已中断'),
 };
 const nav = [
-  { id: 'device', title: '设备信息', icon: Cpu },
-  { id: 'overview', title: '磁盘概览', icon: LayoutDashboard },
-  { id: 'diskdetails', title: '磁盘详情', icon: HardDrive },
-  { id: 'partitions', title: '分区管理', icon: Layers },
-  { id: 'files', title: '文件管理', icon: FolderOpen },
-  { id: 'hex', title: '扇区编辑', icon: Binary },
-  { id: 'transfer', title: '克隆与恢复', icon: ArrowLeftRight },
-  { id: 'backups', title: '备份库', icon: Archive },
-  { id: 'jobs', title: '任务记录', icon: Activity },
-  { id: 'cache', title: '缓存清理', icon: Trash2 },
-  { id: 'upgrade', title: '应用升级', icon: Download },
-  { id: 'settings', title: '设置', icon: Settings },
+  { id: 'device', title: t('设备信息'), icon: Cpu },
+  { id: 'overview', title: t('磁盘概览'), icon: LayoutDashboard },
+  { id: 'diskdetails', title: t('磁盘详情'), icon: HardDrive },
+  { id: 'partitions', title: t('分区管理'), icon: Layers },
+  { id: 'files', title: t('文件管理'), icon: FolderOpen },
+  { id: 'hex', title: t('扇区编辑'), icon: Binary },
+  { id: 'transfer', title: t('克隆与恢复'), icon: ArrowLeftRight },
+  { id: 'backups', title: t('备份库'), icon: Archive },
+  { id: 'jobs', title: t('任务记录'), icon: Activity },
+  { id: 'cache', title: t('缓存清理'), icon: Trash2 },
+  { id: 'upgrade', title: t('应用升级'), icon: Download },
+  { id: 'settings', title: t('设置'), icon: Settings },
 ];
 const navGroups = [
-  { title: '设备与磁盘', ids: ['device', 'overview', 'diskdetails'] },
-  { title: '数据操作', ids: ['partitions', 'files', 'hex', 'transfer', 'backups'] },
-  { title: '维护与设置', ids: ['jobs', 'cache', 'upgrade', 'settings'] },
+  { title: t('设备与磁盘'), ids: ['device', 'overview', 'diskdetails'] },
+  { title: t('数据操作'), ids: ['partitions', 'files', 'hex', 'transfer', 'backups'] },
+  { title: t('维护与设置'), ids: ['jobs', 'cache', 'upgrade', 'settings'] },
 ].map((group) => ({ ...group, items: nav.filter((item) => group.ids.includes(item.id)) }));
 
 function App() {
   const { mode: themeMode, theme, setMode: setThemeMode } = useTheme();
   const [auth, setAuth] = useState<any>(null),
-    [page, setPage] = useState('overview'),
+    [page, setPage] = useState(sessionStorage.getItem('workspace-page') || 'overview'),
     [disks, setDisks] = useState<Disk[]>([]),
     [selected, setSelected] = useState(''),
     [jobs, setJobs] = useState<Job[]>([]),
@@ -260,6 +262,9 @@ function App() {
     target: r.path,
     identity: d.identity,
   });
+  useEffect(() => {
+    sessionStorage.setItem('workspace-page', page);
+  }, [page]);
   const activeJobs = jobs.filter((j) => ['queued', 'running'].includes(j.state));
   const [source, setSource] = useState(''),
     [restoreType, setRestoreType] = useState('upload'),
@@ -425,8 +430,8 @@ function App() {
       setJobs((prev) => [job, ...prev]);
       setNotice(
         wantsDownload(args)
-          ? '已请求流式下载，浏览器接收时开始传输'
-          : '任务已提交，可在任务记录中查看进度',
+          ? t('已请求流式下载，浏览器接收时开始传输')
+          : t('任务已提交，可在任务记录中查看进度'),
       );
       setDialog(null);
       setPage('jobs');
@@ -464,7 +469,7 @@ function App() {
         info = { id: info.id, ...m };
       }
       setUploadInfo(info);
-      setNotice('上传完成，文件已暂存');
+      setNotice(t('上传完成，文件已暂存'));
       return info;
     } catch (e) {
       setError(String(e));
@@ -481,7 +486,7 @@ function App() {
       if (jump !== undefined) setOffset(String(jump));
       const range =
         jump !== undefined && hexRange ? hexRange : { start: off, length: Number(hexLength) };
-      if (range.start + range.length > region.size) throw new Error('读取范围超出当前区域');
+      if (range.start + range.length > region.size) throw new Error(t('读取范围超出当前区域'));
       const window = readWindow(range.start, range.length, off);
       const data = await api(
         '/hex?' + query({ ...targetArgs(), offset: window.offset, length: window.length }),
@@ -501,14 +506,14 @@ function App() {
       { ...targetArgs(), op: 'file_write', edit_mode: fileEditing, ...args },
       fields,
       true,
-      '修改完成后分区会自动卸载，默认浏览模式仍为只读。',
+      t('修改完成后分区会自动卸载，默认浏览模式仍为只读。'),
     );
 
   if (!auth)
     return (
       <div className="startup">
         <Cpu size={40} />
-        <span>连接存储工作台…</span>
+        <span>{t('连接存储工作台…')}</span>
         {error && <p>{error}</p>}
       </div>
     );
@@ -536,7 +541,7 @@ function App() {
       {disk.protected && (
         <span className="badge amber">
           <Lock size={12} />
-          系统磁盘 · 已保护
+          {t('系统磁盘 · 已保护')}
         </span>
       )}
     </div>
@@ -550,11 +555,11 @@ function App() {
           </span>
           <span>
             eMMC <b>Studio</b>
-            <small>存储工作台</small>
+            <small>{t('存储工作台')}</small>
           </span>
         </a>
-        <div className="nav-label">工作空间</div>
-        <nav className="workspace-nav" aria-label="工作空间">
+        <div className="nav-label">{t('工作空间')}</div>
+        <nav className="workspace-nav" aria-label={t('工作空间')}>
           {navGroups.map((group) => (
             <section className="nav-group" key={group.title} aria-label={group.title}>
               <h2 className="nav-group-title">{group.title}</h2>
@@ -580,9 +585,13 @@ function App() {
         <div className="sidebar-bottom">
           <div className="connected">
             <span className="pulse" />
-            设备在线 <span>R28S</span>
+            {t('设备在线')}
+            <span>R28S</span>
           </div>
-          <small>本地部署 · v{settings?.version || '…'}</small>
+          <small>
+            {t('本地部署 · v')}
+            {settings?.version || '…'}
+          </small>
           <button
             onClick={async () => {
               await post('/auth/logout', {});
@@ -590,20 +599,26 @@ function App() {
             }}
           >
             <LogOut size={17} />
-            退出登录
+            {t('退出登录')}
           </button>
         </div>
       </aside>
       <main>
         <header>
           <div className="breadcrumb">
-            存储工作台 <ChevronRight size={15} />
+            {t('存储工作台')}
+            <ChevronRight size={15} />
             <strong>{nav.find((n) => n.id === page)?.title}</strong>
           </div>
           <div className="header-actions">
+            <LanguageSelector
+              dirty={
+                !!dialog || !!textEdit || uploadProgress !== null || (!!hex && hexValue !== hex.hex)
+              }
+            />
             <span className="network">
               <Wifi size={14} />
-              局域网连接
+              {t('局域网连接')}
             </span>
             <div className="theme-control">
               {themeMode === 'system' ? (
@@ -614,14 +629,14 @@ function App() {
                 <Sun size={16} />
               )}
               <select
-                aria-label="主题模式"
-                title="主题模式"
+                aria-label={t('主题模式')}
+                title={t('主题模式')}
                 value={themeMode}
                 onChange={(e) => setThemeMode(e.target.value as ThemeMode)}
               >
-                <option value="system">跟随系统</option>
-                <option value="light">浅色</option>
-                <option value="dark">深色</option>
+                <option value="system">{t('跟随系统')}</option>
+                <option value="light">{t('浅色')}</option>
+                <option value="dark">{t('深色')}</option>
               </select>
             </div>
             <div className="avatar">A</div>
@@ -636,18 +651,18 @@ function App() {
                 {
                   (
                     {
-                      device: '实时查看设备运行状态、资源使用和网络连接。',
-                      overview: '掌握每个存储区域，管理每一份数据。',
-                      diskdetails: '查看设备标识、容量布局、健康状态及寄存器解析。',
-                      partitions: '查看布局，创建和调整磁盘分区。',
-                      files: '浏览分区中的目录与文件，按需开启编辑。',
-                      hex: '查看原始字节，精确编辑指定范围。',
-                      transfer: '在 USB 存储、镜像与 eMMC 之间传输数据。',
-                      backups: '保存完整副本，让每次恢复都有据可查。',
-                      jobs: '每一次读写，都有清晰的进度与结果。',
-                      cache: '按类型选择记录与暂存文件，查看空间并安全清理。',
-                      upgrade: '检测官方版本或导入签名升级包，独立升级应用程序。',
-                      settings: '管理访问密码和工作台设置。',
+                      device: t('实时查看设备运行状态、资源使用和网络连接。'),
+                      overview: t('掌握每个存储区域，管理每一份数据。'),
+                      diskdetails: t('查看设备标识、容量布局、健康状态及寄存器解析。'),
+                      partitions: t('查看布局，创建和调整磁盘分区。'),
+                      files: t('浏览分区中的目录与文件，按需开启编辑。'),
+                      hex: t('查看原始字节，精确编辑指定范围。'),
+                      transfer: t('在 USB 存储、镜像与 eMMC 之间传输数据。'),
+                      backups: t('保存完整副本，让每次恢复都有据可查。'),
+                      jobs: t('每一次读写，都有清晰的进度与结果。'),
+                      cache: t('按类型选择记录与暂存文件，查看空间并安全清理。'),
+                      upgrade: t('检测官方版本或导入签名升级包，独立升级应用程序。'),
+                      settings: t('管理访问密码和工作台设置。'),
                     } as any
                   )[page]
                 }
@@ -655,7 +670,7 @@ function App() {
             </div>
             <div className="heading-actions">
               <select
-                aria-label="选择磁盘"
+                aria-label={t('选择磁盘')}
                 value={selected}
                 onChange={(e) => setSelected(e.target.value)}
               >
@@ -667,7 +682,7 @@ function App() {
               </select>
               <button className="button secondary" onClick={refresh}>
                 <RefreshCw size={15} />
-                刷新
+                {t('刷新')}
               </button>
             </div>
           </div>
@@ -690,11 +705,12 @@ function App() {
             <div className="alert success">
               <Download size={18} />
               <span>
-                {downloadReady.title}：
+                {serverText(downloadReady.title)}
+                {t('：')}
                 {downloadReady.stream
-                  ? '已请求直接流式下载，不占用 SD 卡镜像暂存。'
-                  : '文件已生成，已请求浏览器下载。'}
-                如未弹出下载，请点击右侧按钮；内置浏览器若取消下载，请改用 Chrome/Edge。
+                  ? t('已请求直接流式下载，不占用 SD 卡镜像暂存。')
+                  : t('文件已生成，已请求浏览器下载。')}
+                {t('如未弹出下载，请点击右侧按钮；内置浏览器若取消下载，请改用 Chrome/Edge。')}
               </span>
               <a
                 className="button secondary small"
@@ -705,9 +721,9 @@ function App() {
                 }
                 download
               >
-                立即下载
+                {t('立即下载')}
               </a>
-              <button aria-label="关闭下载提示" onClick={() => setDownloadReady(null)}>
+              <button aria-label={t('关闭下载提示')} onClick={() => setDownloadReady(null)}>
                 <X size={16} />
               </button>
             </div>
@@ -715,8 +731,8 @@ function App() {
           {!disk && !['jobs', 'settings', 'backups', 'cache', 'upgrade'].includes(page) ? (
             <Empty
               icon={HardDrive}
-              title="未发现可管理的磁盘"
-              text="连接 eMMC 或 USB 存储后刷新列表。"
+              title={t('未发现可管理的磁盘')}
+              text={t('连接 eMMC 或 USB 存储后刷新列表。')}
             />
           ) : (
             <>
@@ -729,34 +745,34 @@ function App() {
                         <span>{names[disk.kind] || disk.kind}</span>
                         <span>
                           <span className="pulse" />
-                          {busy.includes(disk.identity) ? '任务执行中' : '已连接'}
+                          {busy.includes(disk.identity) ? t('任务执行中') : t('已连接')}
                         </span>
                       </div>
                       <h2>{disk.model}</h2>
                       <div className="device-path">
                         {disk.path}
                         <span>
-                          {disk.table?.label?.toUpperCase() || '未分区'} ·{' '}
-                          {disk.protected ? '系统磁盘已保护' : '可管理设备'}
+                          {disk.table?.label?.toUpperCase() || t('未分区')} ·{' '}
+                          {disk.protected ? t('系统磁盘已保护') : t('可管理设备')}
                         </span>
                       </div>
                       <div className="hero-metrics">
                         <div>
-                          <small>用户区容量</small>
+                          <small>{t('用户区容量')}</small>
                           <strong>{fmt(disk.size)}</strong>
                         </div>
                         <div>
-                          <small>硬件启动区</small>
+                          <small>{t('硬件启动区')}</small>
                           <strong>
                             {disk.regions.filter((r) => r.region.startsWith('boot')).length}{' '}
-                            <em>个</em>
+                            <em>{t('个')}</em>
                           </strong>
                         </div>
                         <div>
-                          <small>文件系统分区</small>
+                          <small>{t('文件系统分区')}</small>
                           <strong>
                             {disk.regions.filter((r) => r.region === 'partition').length}{' '}
-                            <em>个</em>
+                            <em>{t('个')}</em>
                           </strong>
                         </div>
                       </div>
@@ -774,41 +790,41 @@ function App() {
                   <div className="stat-grid">
                     <Stat
                       icon={Layers}
-                      label="分区表"
-                      value={disk.table?.label?.toUpperCase() || '无分区表'}
-                      detail="实时读取磁盘布局"
+                      label={t('分区表')}
+                      value={disk.table?.label?.toUpperCase() || t('无分区表')}
+                      detail={t('实时读取磁盘布局')}
                     />
                     <Stat
                       icon={ShieldCheck}
-                      label="BOOT 区保护"
+                      label={t('BOOT 区保护')}
                       value={
                         disk.regions.some((r) => r.region.startsWith('boot'))
-                          ? '默认只读'
-                          : '不适用'
+                          ? t('默认只读')
+                          : t('不适用')
                       }
-                      detail="仅在确认写入时临时解锁"
+                      detail={t('仅在确认写入时临时解锁')}
                     />
                     <Stat
                       icon={Archive}
-                      label="本地备份空间"
+                      label={t('本地备份空间')}
                       value={fmt(free)}
-                      detail="存储在系统 SD 卡上"
+                      detail={t('存储在系统 SD 卡上')}
                     />
                     <Stat
                       icon={Activity}
-                      label="进行中的任务"
+                      label={t('进行中的任务')}
                       value={String(activeJobs.length)}
-                      detail="浏览器关闭后任务仍继续"
+                      detail={t('浏览器关闭后任务仍继续')}
                     />
                   </div>
                   <div className="overview-columns">
                     <section className="panel">
                       <PanelHead
                         icon={Layers}
-                        title="存储区域"
+                        title={t('存储区域')}
                         action={
                           <button className="text-button" onClick={() => setPage('partitions')}>
-                            管理分区
+                            {t('管理分区')}
                             <ArrowUpRight size={15} />
                           </button>
                         }
@@ -836,7 +852,7 @@ function App() {
                               <div>
                                 <b>{fmt(r.size)}</b>
                                 <small>
-                                  {r.ro ? '只读保护' : '用户数据'}
+                                  {r.ro ? t('只读保护') : t('用户数据')}
                                   <ChevronRight size={13} />
                                 </small>
                               </div>
@@ -853,7 +869,7 @@ function App() {
                             </div>
                             <div>
                               <b>{fmt(disk.rpmb.size)}</b>
-                              <small>认证访问</small>
+                              <small>{t('认证访问')}</small>
                             </div>
                           </div>
                         )}
@@ -862,10 +878,10 @@ function App() {
                     <section className="panel">
                       <PanelHead
                         icon={Activity}
-                        title="最近任务"
+                        title={t('最近任务')}
                         action={
                           <button className="text-button" onClick={() => setPage('jobs')}>
-                            查看全部
+                            {t('查看全部')}
                             <ArrowUpRight size={15} />
                           </button>
                         }
@@ -875,8 +891,8 @@ function App() {
                       ) : (
                         <Empty
                           icon={Activity}
-                          title="一切就绪"
-                          text="开始备份或克隆后，进度会显示在这里。"
+                          title={t('一切就绪')}
+                          text={t('开始备份或克隆后，进度会显示在这里。')}
                         />
                       )}
                       <div className="quick-actions">
@@ -886,12 +902,12 @@ function App() {
                           }}
                         >
                           <Archive size={18} />
-                          创建备份
+                          {t('创建备份')}
                           <ChevronRight size={16} />
                         </button>
                         <button onClick={() => setPage('transfer')}>
                           <ArrowLeftRight size={18} />
-                          克隆与恢复
+                          {t('克隆与恢复')}
                           <ChevronRight size={16} />
                         </button>
                       </div>
@@ -899,7 +915,7 @@ function App() {
                   </div>
                   <button className="button secondary" onClick={() => setPage('diskdetails')}>
                     <HardDrive size={16} />
-                    查看磁盘详情
+                    {t('查看磁盘详情')}
                     <ArrowUpRight size={15} />
                   </button>
                 </>
@@ -909,7 +925,7 @@ function App() {
                   <section className="panel">
                     <PanelHead
                       icon={HardDrive}
-                      title="磁盘详情"
+                      title={t('磁盘详情')}
                       action={
                         disk.kind === 'emmc' ? (
                           <button
@@ -927,7 +943,7 @@ function App() {
                               }
                             }}
                           >
-                            {extLoading ? '正在读取 EXT_CSD…' : '刷新 EXT_CSD'}
+                            {extLoading ? t('正在读取 EXT_CSD…') : t('刷新 EXT_CSD')}
                           </button>
                         ) : null
                       }
@@ -941,7 +957,7 @@ function App() {
                   <section className="panel">
                     <PanelHead
                       icon={Layers}
-                      title="分区布局"
+                      title={t('分区布局')}
                       action={
                         <div className="button-group">
                           <button
@@ -949,7 +965,7 @@ function App() {
                             className="button secondary"
                             onClick={() =>
                               open(
-                                '建立分区表',
+                                t('建立分区表'),
                                 {
                                   ...targetArgs(disk.regions[0]),
                                   op: 'partition',
@@ -958,7 +974,7 @@ function App() {
                                 [
                                   {
                                     key: 'table',
-                                    label: '分区表类型',
+                                    label: t('分区表类型'),
                                     type: 'select',
                                     value: 'gpt',
                                     options: [
@@ -968,18 +984,18 @@ function App() {
                                   },
                                 ],
                                 true,
-                                '此操作将替换原分区表，原文件系统可能无法访问。',
+                                t('此操作将替换原分区表，原文件系统可能无法访问。'),
                               )
                             }
                           >
-                            建立分区表
+                            {t('建立分区表')}
                           </button>
                           <button
                             disabled={!disk.writable || !disk.table}
                             className="button"
                             onClick={() =>
                               open(
-                                '创建分区',
+                                t('创建分区'),
                                 {
                                   ...targetArgs(disk.regions[0]),
                                   op: 'partition',
@@ -988,25 +1004,25 @@ function App() {
                                 [
                                   {
                                     key: 'start',
-                                    label: '分区起点',
+                                    label: t('分区起点'),
                                     type: 'sectorbytes',
                                     value: nextStart(disk) * 512,
                                     max: disk.size - 1048576,
                                   },
                                   {
                                     key: 'size',
-                                    label: '分区容量',
+                                    label: t('分区容量'),
                                     type: 'sectorbytes',
                                     value: 100 * 1048576,
                                     max: disk.size - nextStart(disk) * 512,
-                                    help: '支持容量与扇区换算；起点和容量均需 1 MiB 对齐。',
+                                    help: t('支持容量与扇区换算；起点和容量均需 1 MiB 对齐。'),
                                   },
                                 ],
                               )
                             }
                           >
                             <Plus size={16} />
-                            创建分区
+                            {t('创建分区')}
                           </button>
                         </div>
                       }
@@ -1016,11 +1032,11 @@ function App() {
                       <table>
                         <thead>
                           <tr>
-                            <th>分区</th>
-                            <th>文件系统 / 卷标</th>
-                            <th>起点 / 大小</th>
-                            <th>UUID / 类型</th>
-                            <th>操作</th>
+                            <th>{t('分区')}</th>
+                            <th>{t('文件系统 / 卷标')}</th>
+                            <th>{t('起点 / 大小')}</th>
+                            <th>{t('UUID / 类型')}</th>
+                            <th>{t('操作')}</th>
                           </tr>
                         </thead>
                         <tbody>
@@ -1033,18 +1049,20 @@ function App() {
                                   <small>{r.path}</small>
                                 </td>
                                 <td>
-                                  <span className="badge">{r.fstype || '未格式化'}</span>
+                                  <span className="badge">{r.fstype || t('未格式化')}</span>
                                   <small>{r.label || r.partlabel || '—'}</small>
                                 </td>
                                 <td>
                                   {fmt(r.size)}
                                   <small>
-                                    起始扇区 {r.start} · 末扇区{' '}
-                                    {Number(r.start) + Math.floor(r.size / 512) - 1}
+                                    {t('起始扇区')}
+                                    {r.start}
+                                    {t('· 末扇区')} {Number(r.start) + Math.floor(r.size / 512) - 1}
                                   </small>
                                   <small>
-                                    {r.ro ? '只读' : '可读写'} ·{' '}
-                                    {(r.mountpoints || []).filter(Boolean).join(', ') || '未挂载'}
+                                    {r.ro ? t('只读') : t('可读写')} ·{' '}
+                                    {(r.mountpoints || []).filter(Boolean).join(', ') ||
+                                      t('未挂载')}
                                   </small>
                                 </td>
                                 <td className="mono small-text">
@@ -1054,11 +1072,11 @@ function App() {
                                 <td>
                                   <div className="row-actions">
                                     <button
-                                      title="修改属性"
+                                      title={t('修改属性')}
                                       disabled={!disk.writable}
                                       onClick={() =>
                                         open(
-                                          '修改分区属性',
+                                          t('修改分区属性'),
                                           {
                                             ...targetArgs(disk.regions[0]),
                                             op: 'partition',
@@ -1068,21 +1086,21 @@ function App() {
                                           [
                                             {
                                               key: 'label',
-                                              label: 'GPT 分区名称',
+                                              label: t('GPT 分区名称'),
                                               value: r.partlabel || '',
                                               help:
                                                 disk.table?.label === 'dos'
-                                                  ? 'MBR 不支持名称，此字段会忽略。'
+                                                  ? t('MBR 不支持名称，此字段会忽略。')
                                                   : '',
                                             },
                                             {
                                               key: 'type',
-                                              label: '类型代码或 GUID',
+                                              label: t('类型代码或 GUID'),
                                               value: r.parttype || '',
                                             },
                                             {
                                               key: 'bootable',
-                                              label: 'MBR 启动标志',
+                                              label: t('MBR 启动标志'),
                                               type: 'checkbox',
                                               value: Boolean(
                                                 disk.table?.partitions?.find(
@@ -1097,16 +1115,16 @@ function App() {
                                       <Pencil size={15} />
                                     </button>
                                     <button
-                                      title="格式化"
+                                      title={t('格式化')}
                                       disabled={!disk.writable}
                                       onClick={() =>
                                         open(
-                                          '格式化分区',
+                                          t('格式化分区'),
                                           { ...targetArgs(r), op: 'format' },
                                           [
                                             {
                                               key: 'filesystem',
-                                              label: '文件系统',
+                                              label: t('文件系统'),
                                               type: 'select',
                                               value: 'ext4',
                                               options: ['ext4', 'vfat', 'exfat', 'ntfs'].map(
@@ -1118,48 +1136,48 @@ function App() {
                                             },
                                             {
                                               key: 'label',
-                                              label: '卷标（最多 11 字符）',
+                                              label: t('卷标（最多 11 字符）'),
                                               type: 'label',
                                               value: '',
                                             },
                                           ],
                                           true,
-                                          '格式化会清除该分区的现有文件。',
+                                          t('格式化会清除该分区的现有文件。'),
                                         )
                                       }
                                     >
-                                      格式化
+                                      {t('格式化')}
                                     </button>
                                     <button
-                                      title="调整大小"
+                                      title={t('调整大小')}
                                       disabled={!disk.writable || r.fstype !== 'ext4'}
                                       onClick={() =>
                                         open(
-                                          '调整 ext4 分区大小',
+                                          t('调整 ext4 分区大小'),
                                           { ...targetArgs(r), op: 'resize' },
                                           [
                                             {
                                               key: 'size',
-                                              label: '新容量',
+                                              label: t('新容量'),
                                               type: 'sectorbytes',
                                               value: r.size,
                                               max: resizeLimit(disk, r),
                                             },
                                           ],
                                           true,
-                                          '离线检查文件系统后调整大小，不移动分区起点。',
+                                          t('离线检查文件系统后调整大小，不移动分区起点。'),
                                         )
                                       }
                                     >
-                                      调整
+                                      {t('调整')}
                                     </button>
                                     <button
-                                      title="删除分区"
+                                      title={t('删除分区')}
                                       disabled={!disk.writable}
                                       className="danger-icon"
                                       onClick={() =>
                                         launch(
-                                          '删除分区',
+                                          t('删除分区'),
                                           {
                                             ...targetArgs(disk.regions[0]),
                                             op: 'partition',
@@ -1167,7 +1185,7 @@ function App() {
                                             index: partIndex(r),
                                           },
                                           true,
-                                          '删除分区表中的这一项，原数据将无法通过该分区访问。',
+                                          t('删除分区表中的这一项，原数据将无法通过该分区访问。'),
                                         )
                                       }
                                     >
@@ -1181,10 +1199,14 @@ function App() {
                       </table>
                     </div>
                     {!disk.regions.some((r) => r.region === 'partition') && (
-                      <Empty icon={Layers} title="还没有分区" text="建立分区表后即可创建分区。" />
+                      <Empty
+                        icon={Layers}
+                        title={t('还没有分区')}
+                        text={t('建立分区表后即可创建分区。')}
+                      />
                     )}
                     <div className="info-strip">
-                      分区表修改前会自动保存快照。ext4 支持离线调整；不移动已有分区。
+                      {t('分区表修改前会自动保存快照。ext4 支持离线调整；不移动已有分区。')}
                     </div>
                   </section>
                 </>
@@ -1194,7 +1216,7 @@ function App() {
                   {regionSelector}
                   <PanelHead
                     icon={FolderOpen}
-                    title="文件浏览器"
+                    title={t('文件浏览器')}
                     action={
                       <button
                         className="button secondary small"
@@ -1202,22 +1224,22 @@ function App() {
                         onClick={() => setFileEditing(!fileEditing)}
                       >
                         {fileEditing ? <Pencil size={12} /> : <Lock size={12} />}{' '}
-                        {fileEditing ? '编辑模式 · 点击退出' : '只读浏览 · 开启编辑模式'}
+                        {fileEditing ? t('编辑模式 · 点击退出') : t('只读浏览 · 开启编辑模式')}
                       </button>
                     }
                   />
                   {region?.region !== 'partition' ? (
                     <Empty
                       icon={FolderOpen}
-                      title="选择文件系统分区"
-                      text="BOOT 区和整盘请使用扇区编辑或镜像备份。"
+                      title={t('选择文件系统分区')}
+                      text={t('BOOT 区和整盘请使用扇区编辑或镜像备份。')}
                     />
                   ) : (
                     <>
                       <div className="file-toolbar">
                         <button
                           className="icon-button"
-                          aria-label="上级目录"
+                          aria-label={t('上级目录')}
                           onClick={() => loadFiles(path.split('/').slice(0, -1).join('/'))}
                         >
                           <ArrowLeft size={17} />
@@ -1230,17 +1252,17 @@ function App() {
                           disabled={!disk.writable || !fileEditing}
                           className="button secondary small"
                           onClick={() =>
-                            fileAction('新建目录', { action: 'mkdir' }, [
+                            fileAction(t('新建目录'), { action: 'mkdir' }, [
                               {
                                 key: 'path',
-                                label: '目录路径',
-                                value: path ? path + '/新目录' : '新目录',
+                                label: t('目录路径'),
+                                value: path ? path + t('/新目录') : t('新目录'),
                               },
                             ])
                           }
                         >
                           <Plus size={14} />
-                          新建目录
+                          {t('新建目录')}
                         </button>
                         <label
                           className={
@@ -1248,7 +1270,7 @@ function App() {
                           }
                         >
                           <Upload size={14} />
-                          上传文件
+                          {t('上传文件')}
                           <input
                             type="file"
                             hidden
@@ -1259,7 +1281,7 @@ function App() {
                               try {
                                 const u = await upload(f);
                                 fileAction(
-                                  '上传文件',
+                                  t('上传文件'),
                                   {
                                     action: 'upload',
                                     upload: u.id,
@@ -1268,7 +1290,7 @@ function App() {
                                   [
                                     {
                                       key: 'overwrite',
-                                      label: '允许覆盖同名文件',
+                                      label: t('允许覆盖同名文件'),
                                       type: 'checkbox',
                                       value: false,
                                     },
@@ -1283,17 +1305,17 @@ function App() {
                       {loading ? (
                         <div className="inline-loading">
                           <Loader2 className="spin" />
-                          读取目录…
+                          {t('读取目录…')}
                         </div>
                       ) : (
                         <div className="table-scroll">
                           <table>
                             <thead>
                               <tr>
-                                <th>名称</th>
-                                <th>大小</th>
-                                <th>修改时间</th>
-                                <th>操作</th>
+                                <th>{t('名称')}</th>
+                                <th>{t('大小')}</th>
+                                <th>{t('修改时间')}</th>
+                                <th>{t('操作')}</th>
                               </tr>
                             </thead>
                             <tbody>
@@ -1325,20 +1347,22 @@ function App() {
                                           <FileText size={18} />
                                         )}
                                         <strong>{e.name}</strong>
-                                        {e.symlink && <span className="badge amber">符号链接</span>}
+                                        {e.symlink && (
+                                          <span className="badge amber">{t('符号链接')}</span>
+                                        )}
                                       </button>
                                     </td>
-                                    <td>{e.directory ? '目录' : fmt(e.size)}</td>
+                                    <td>{e.directory ? t('目录') : fmt(e.size)}</td>
                                     <td>{date(e.modified)}</td>
                                     <td>
                                       <div className="row-actions">
                                         {!e.directory && (
                                           <button
-                                            title="下载"
+                                            title={t('下载')}
                                             disabled={e.symlink}
                                             onClick={() =>
                                               launch(
-                                                '导出文件',
+                                                t('导出文件'),
                                                 { ...targetArgs(), op: 'file_export', path: ep },
                                                 false,
                                               )
@@ -1348,24 +1372,30 @@ function App() {
                                           </button>
                                         )}
                                         <button
-                                          title="重命名"
+                                          title={t('重命名')}
                                           disabled={!disk.writable || !fileEditing || e.symlink}
                                           onClick={() =>
                                             fileAction(
-                                              '重命名文件',
+                                              t('重命名文件'),
                                               { action: 'rename', path: ep },
-                                              [{ key: 'destination', label: '新路径', value: ep }],
+                                              [
+                                                {
+                                                  key: 'destination',
+                                                  label: t('新路径'),
+                                                  value: ep,
+                                                },
+                                              ],
                                             )
                                           }
                                         >
                                           <Pencil size={15} />
                                         </button>
                                         <button
-                                          title="删除"
+                                          title={t('删除')}
                                           className="danger-icon"
                                           disabled={!disk.writable || !fileEditing || e.symlink}
                                           onClick={() =>
-                                            fileAction('删除文件或目录', {
+                                            fileAction(t('删除文件或目录'), {
                                               action: 'delete',
                                               path: ep,
                                             })
@@ -1381,7 +1411,11 @@ function App() {
                             </tbody>
                           </table>
                           {!entries.length && (
-                            <Empty icon={Folder} title="目录为空" text="文件上传后会出现在这里。" />
+                            <Empty
+                              icon={Folder}
+                              title={t('目录为空')}
+                              text={t('文件上传后会出现在这里。')}
+                            />
                           )}
                         </div>
                       )}
@@ -1394,22 +1428,23 @@ function App() {
                   {regionSelector}
                   <PanelHead
                     icon={Binary}
-                    title="原始字节编辑器"
-                    action={<span className="badge">每页 256 B · 按需加载 64 KiB</span>}
+                    title={t('原始字节编辑器')}
+                    action={<span className="badge">{t('每页 256 B · 按需加载 64 KiB')}</span>}
                   />
                   <div className="info-strip">
-                    区域总容量：{fmt(region!.size)} = {region!.size.toLocaleString('zh-CN')} 字节。1
-                    KiB = 1024 B；1 MiB = 1024 KiB；1 GiB = 1024 MiB。
+                    {t('区域总容量：')}
+                    {fmt(region!.size)} = {region!.size.toLocaleString(locale)}
+                    {t('字节。1 KiB = 1024 B；1 MiB = 1024 KiB；1 GiB = 1024 MiB。')}
                   </div>
                   <div className="hex-toolbar">
                     <ByteInput
-                      label="读取偏移"
+                      label={t('读取偏移')}
                       value={Number(offset)}
                       onChange={(n) => setOffset(String(n))}
                       max={region!.size - 1}
                     />
                     <ByteInput
-                      label="读取长度"
+                      label={t('读取长度')}
                       value={Number(hexLength)}
                       onChange={(n) => setHexLength(String(n))}
                       initialUnit="KiB"
@@ -1423,7 +1458,9 @@ function App() {
                         setHexLength(String(region!.size));
                       }}
                     >
-                      整个区域（{fmt(region!.size)}）
+                      {t('整个区域（')}
+                      {fmt(region!.size)}
+                      {t('）')}
                     </button>
                     <button
                       className="button"
@@ -1438,7 +1475,7 @@ function App() {
                       onClick={() => hexLoad()}
                     >
                       <Search size={16} />
-                      读取
+                      {t('读取')}
                     </button>
                     {hex && (
                       <>
@@ -1446,7 +1483,7 @@ function App() {
                           className="button secondary"
                           onClick={() =>
                             open(
-                              '导出原始范围',
+                              t('导出原始范围'),
                               {
                                 ...targetArgs(),
                                 op: 'range_export',
@@ -1455,7 +1492,7 @@ function App() {
                               [
                                 {
                                   key: 'length',
-                                  label: '导出长度',
+                                  label: t('导出长度'),
                                   type: 'bytes',
                                   value: hexRange?.length ?? hex.length,
                                   max: region!.size - (hexRange?.start ?? hex.offset),
@@ -1466,7 +1503,7 @@ function App() {
                           }
                         >
                           <Download size={15} />
-                          导出范围
+                          {t('导出范围')}
                         </button>
                       </>
                     )}
@@ -1474,17 +1511,21 @@ function App() {
                   {!hex ? (
                     <Empty
                       icon={Binary}
-                      title="从一个偏移开始"
-                      text="读取后可查看十六进制字节、ASCII 和编辑前校验值。"
+                      title={t('从一个偏移开始')}
+                      text={t('读取后可查看十六进制字节、ASCII 和编辑前校验值。')}
                     />
                   ) : (
                     <>
                       <div className="info-strip">
-                        选定读取范围：{hexRange?.start.toLocaleString()} 字节起，共{' '}
-                        {fmt(hexRange?.length || hex.length)}；当前已读取 {fmt(hex.length)}，加载块{' '}
+                        {t('选定读取范围：')}
+                        {hexRange?.start.toLocaleString()}
+                        {t('字节起，共')} {fmt(hexRange?.length || hex.length)}
+                        {t('；当前已读取')}
+                        {fmt(hex.length)}
+                        {t('，加载块')}{' '}
                         {hexRange ? Math.floor((hex.offset - hexRange.start) / 65536) + 1 : 1} /{' '}
                         {Math.ceil((hexRange?.length || hex.length) / 65536)}
-                        。大范围按需读取，单次修改仍最多 64 KiB。
+                        {t('。大范围按需读取，单次修改仍最多 64 KiB。')}
                       </div>
                       <HexGrid
                         rangeStart={hexRange?.start ?? hex.offset}
@@ -1498,13 +1539,16 @@ function App() {
                         writable={disk.writable}
                       />
                       <div className="editor-footer">
-                        <span className="mono small-text">原始 SHA-256：{hex.sha256}</span>
+                        <span className="mono small-text">
+                          {t('原始 SHA-256：')}
+                          {hex.sha256}
+                        </span>
                         <button
                           className="button"
                           disabled={!disk.writable || hexValue.replace(/\s/g, '') === hex.hex}
                           onClick={() =>
                             launch(
-                              '保存原始字节',
+                              t('保存原始字节'),
                               {
                                 ...targetArgs(),
                                 op: 'hex_write',
@@ -1513,12 +1557,12 @@ function App() {
                                 expected_sha256: hex.sha256,
                               },
                               true,
-                              '修改前会保存原始字节快照，完成后自动读回校验。',
+                              t('修改前会保存原始字节快照，完成后自动读回校验。'),
                             )
                           }
                         >
                           <Check size={16} />
-                          核对并保存
+                          {t('核对并保存')}
                         </button>
                       </div>
                     </>
@@ -1530,12 +1574,14 @@ function App() {
                   {regionSelector}
                   <div className="two-columns">
                     <section className="panel">
-                      <PanelHead icon={ArrowLeftRight} title="设备克隆" />
-                      <p className="panel-description">逐字节复制另一块磁盘或分区，并读回验证。</p>
+                      <PanelHead icon={ArrowLeftRight} title={t('设备克隆')} />
+                      <p className="panel-description">
+                        {t('逐字节复制另一块磁盘或分区，并读回验证。')}
+                      </p>
                       <label className="field">
-                        源设备
+                        {t('源设备')}
                         <select value={source} onChange={(e) => setSource(e.target.value)}>
-                          <option value="">选择源设备</option>
+                          <option value="">{t('选择源设备')}</option>
                           {allRegions
                             .filter(
                               (r) => r.disk.path !== disk.path && !r.region.startsWith('boot'),
@@ -1550,14 +1596,17 @@ function App() {
                       <div className="transfer-flow">
                         <div>
                           <HardDrive size={26} />
-                          <strong>{source || '未选择来源'}</strong>
-                          <small>源设备</small>
+                          <strong>{source || t('未选择来源')}</strong>
+                          <small>{t('源设备')}</small>
                         </div>
                         <ArrowLeftRight size={23} />
                         <div>
                           <Cpu size={28} />
                           <strong>{region?.name}</strong>
-                          <small>目标 · {fmt(region?.size || 0)}</small>
+                          <small>
+                            {t('目标 ·')}
+                            {fmt(region?.size || 0)}
+                          </small>
                         </div>
                       </div>
                       <button
@@ -1566,7 +1615,7 @@ function App() {
                         onClick={() => {
                           const s = allRegions.find((r) => r.path === source)!;
                           launch(
-                            '克隆设备',
+                            t('克隆设备'),
                             {
                               ...targetArgs(),
                               op: 'clone',
@@ -1574,46 +1623,48 @@ function App() {
                               source_identity: s.disk.identity,
                             },
                             true,
-                            '目标现有数据将被覆盖。源容量不得超过目标；整盘对应整盘，分区对应分区。',
+                            t(
+                              '目标现有数据将被覆盖。源容量不得超过目标；整盘对应整盘，分区对应分区。',
+                            ),
                           );
                         }}
                       >
-                        核对克隆目标
+                        {t('核对克隆目标')}
                         <ArrowUpRight size={16} />
                       </button>
-                      <div className="info-strip">BOOT 区请使用单独镜像或完整备份恢复。</div>
+                      <div className="info-strip">{t('BOOT 区请使用单独镜像或完整备份恢复。')}</div>
                     </section>
                     <section className="panel">
-                      <PanelHead icon={Download} title="镜像恢复" />
+                      <PanelHead icon={Download} title={t('镜像恢复')} />
                       <div className="segmented">
                         <button
                           className={restoreType === 'upload' ? 'active' : ''}
                           onClick={() => setRestoreType('upload')}
                         >
-                          电脑上传
+                          {t('电脑上传')}
                         </button>
                         <button
                           className={restoreType === 'usb' ? 'active' : ''}
                           onClick={() => setRestoreType('usb')}
                         >
-                          U 盘镜像
+                          {t('U 盘镜像')}
                         </button>
                         <button
                           className={restoreType === 'backup' ? 'active' : ''}
                           onClick={() => setRestoreType('backup')}
                         >
-                          已有备份
+                          {t('已有备份')}
                         </button>
                       </div>
                       {restoreType === 'upload' ? (
                         <>
                           <label className="upload-drop">
                             <Upload size={26} />
-                            <strong>{uploadInfo?.name || '选择镜像文件'}</strong>
+                            <strong>{uploadInfo?.name || t('选择镜像文件')}</strong>
                             <small>
                               {uploadInfo
-                                ? fmt(uploadInfo.size) + ' · 上传完成'
-                                : '原始 IMG / BIN 或 gzip 镜像'}
+                                ? fmt(uploadInfo.size) + t(' · 上传完成')
+                                : t('原始 IMG / BIN 或 gzip 镜像')}
                             </small>
                             <input
                               type="file"
@@ -1634,12 +1685,12 @@ function App() {
                       ) : restoreType === 'usb' ? (
                         <>
                           <label className="field">
-                            U 盘分区
+                            {t('U 盘分区')}
                             <select
                               value={usbPartition}
                               onChange={(e) => setUsbPartition(e.target.value)}
                             >
-                              <option value="">选择 USB 分区</option>
+                              <option value="">{t('选择 USB 分区')}</option>
                               {usbRegions.map((r) => (
                                 <option key={r.path} value={r.path}>
                                   {r.name} · {fmt(r.size)}
@@ -1648,7 +1699,7 @@ function App() {
                             </select>
                           </label>
                           <label className="field">
-                            镜像相对路径
+                            {t('镜像相对路径')}
                             <input
                               value={imagePath}
                               onChange={(e) => setImagePath(e.target.value)}
@@ -1656,19 +1707,21 @@ function App() {
                             />
                           </label>
                           {!usbRegions.length && (
-                            <div className="info-strip">当前没有 USB 存储，插入后会自动发现。</div>
+                            <div className="info-strip">
+                              {t('当前没有 USB 存储，插入后会自动发现。')}
+                            </div>
                           )}
                         </>
                       ) : (
                         <>
                           <p className="panel-description">
-                            在备份库中选择区域镜像或完整备份进行恢复。
+                            {t('在备份库中选择区域镜像或完整备份进行恢复。')}
                           </p>
                           <button
                             className="button secondary full"
                             onClick={() => setPage('backups')}
                           >
-                            打开备份库
+                            {t('打开备份库')}
                             <ChevronRight size={16} />
                           </button>
                         </>
@@ -1681,17 +1734,17 @@ function App() {
                               checked={imageGzip}
                               onChange={(e) => setImageGzip(e.target.checked)}
                             />
-                            镜像使用 gzip 压缩
+                            {t('镜像使用 gzip 压缩')}
                           </label>
                           {imageGzip && (
                             <label className="field">
-                              解压后大小（字节）
+                              {t('解压后大小（字节）')}
                               <input
                                 type="number"
                                 value={imageSize}
                                 onChange={(e) => setImageSize(e.target.value)}
                               />
-                              <small>写入前会验证完整解压长度。</small>
+                              <small>{t('写入前会验证完整解压长度。')}</small>
                             </label>
                           )}
                           <button
@@ -1703,7 +1756,7 @@ function App() {
                             onClick={() => {
                               const s = usbRegions.find((r) => r.path === usbPartition);
                               launch(
-                                '恢复镜像',
+                                t('恢复镜像'),
                                 {
                                   ...targetArgs(),
                                   op: 'restore',
@@ -1719,11 +1772,11 @@ function App() {
                                   image_size: Number(imageSize),
                                 },
                                 true,
-                                '镜像数据将覆盖所选区域，完成后进行读回校验。',
+                                t('镜像数据将覆盖所选区域，完成后进行读回校验。'),
                               );
                             }}
                           >
-                            核对恢复目标
+                            {t('核对恢复目标')}
                             <ArrowUpRight size={16} />
                           </button>
                         </>
@@ -1736,7 +1789,7 @@ function App() {
                 <>
                   <div className="two-columns">
                     <section className="panel">
-                      <PanelHead icon={Archive} title="创建备份" />
+                      <PanelHead icon={Archive} title={t('创建备份')} />
                       {disk ? (
                         <>
                           {' '}
@@ -1750,7 +1803,7 @@ function App() {
                               onChange={(e) => setBackupFull(e.target.checked)}
                               disabled={disk.kind !== 'emmc' || region?.region !== 'user'}
                             />
-                            完整备份：用户区 + BOOT0 + BOOT1
+                            {t('完整备份：用户区 + BOOT0 + BOOT1')}
                           </label>
                           <label className="checkbox">
                             <input
@@ -1758,27 +1811,32 @@ function App() {
                               checked={backupCompressed}
                               onChange={(e) => setBackupCompressed(e.target.checked)}
                             />
-                            gzip 压缩，节省存储空间
+                            {t('gzip 压缩，节省存储空间')}
                           </label>
                           <label className="field">
-                            保存位置
+                            {t('保存位置')}
                             <select
                               value={backupStorage}
                               onChange={(e) => setBackupStorage(e.target.value)}
                             >
-                              <option value="local">设备 SD 卡 · 剩余 {fmt(free)}</option>
-                              <option value="usb">USB 存储分区</option>
-                              <option value="browser">下载到电脑（直接流式，不占 SD 卡）</option>
+                              <option value="local">
+                                {t('设备 SD 卡 · 剩余')}
+                                {fmt(free)}
+                              </option>
+                              <option value="usb">{t('USB 存储分区')}</option>
+                              <option value="browser">
+                                {t('下载到电脑（直接流式，不占 SD 卡）')}
+                              </option>
                             </select>
                           </label>
                           {backupStorage === 'usb' && (
                             <label className="field">
-                              USB 分区
+                              {t('USB 分区')}
                               <select
                                 value={backupUsb}
                                 onChange={(e) => setBackupUsb(e.target.value)}
                               >
-                                <option value="">选择 USB 分区</option>
+                                <option value="">{t('选择 USB 分区')}</option>
                                 {usbRegions.map((r) => (
                                   <option value={r.path} key={r.path}>
                                     {r.name} · {fmt(r.size)}
@@ -1795,7 +1853,7 @@ function App() {
                             onClick={() => {
                               const s = usbRegions.find((r) => r.path === backupUsb);
                               launch(
-                                '创建磁盘备份',
+                                t('创建磁盘备份'),
                                 {
                                   ...targetArgs(),
                                   op: 'backup',
@@ -1812,11 +1870,15 @@ function App() {
                             }}
                           >
                             <Archive size={16} />
-                            开始备份
+                            {t('开始备份')}
                           </button>
                         </>
                       ) : (
-                        <Empty icon={HardDrive} title="未选择磁盘" text="连接设备后创建备份。" />
+                        <Empty
+                          icon={HardDrive}
+                          title={t('未选择磁盘')}
+                          text={t('连接设备后创建备份。')}
+                        />
                       )}
                     </section>
                     <section className="backup-intro">
@@ -1824,22 +1886,23 @@ function App() {
                         <Archive size={48} />
                         <ShieldCheck size={26} />
                       </div>
-                      <h2>为每个区域保存一份副本</h2>
+                      <h2>{t('为每个区域保存一份副本')}</h2>
                       <p>
-                        完整备份包含原始镜像、分区表、设备信息与 SHA-256
-                        校验清单。下载到电脑后，可随时重新导入恢复。
+                        {t(
+                          '完整备份包含原始镜像、分区表、设备信息与 SHA-256 校验清单。下载到电脑后，可随时重新导入恢复。',
+                        )}
                       </p>
                       <div>
                         <CheckCircle2 size={16} />
-                        流式读取，低内存占用
+                        {t('流式读取，低内存占用')}
                       </div>
                       <div>
                         <CheckCircle2 size={16} />
-                        恢复前核对，恢复后读回校验
+                        {t('恢复前核对，恢复后读回校验')}
                       </div>
                       <label className="button secondary">
                         <Upload size={16} />
-                        导入完整备份包
+                        {t('导入完整备份包')}
                         <input
                           type="file"
                           accept=".tar,.tar.gz,.tgz"
@@ -1849,7 +1912,11 @@ function App() {
                             if (f)
                               try {
                                 const u = await upload(f);
-                                launch('导入备份包', { op: 'import_backup', upload: u.id }, false);
+                                launch(
+                                  t('导入备份包'),
+                                  { op: 'import_backup', upload: u.id },
+                                  false,
+                                );
                               } catch {}
                             e.target.value = '';
                           }}
@@ -1860,14 +1927,19 @@ function App() {
                   <section className="panel">
                     <PanelHead
                       icon={Archive}
-                      title="备份库"
-                      action={<span className="badge">{backups.length} 份备份</span>}
+                      title={t('备份库')}
+                      action={
+                        <span className="badge">
+                          {backups.length}
+                          {t('份备份')}
+                        </span>
+                      }
                     />
                     {!backups.length ? (
                       <Empty
                         icon={Archive}
-                        title="还没有备份"
-                        text="创建第一份备份后，镜像和校验信息会保存在这里。"
+                        title={t('还没有备份')}
+                        text={t('创建第一份备份后，镜像和校验信息会保存在这里。')}
                       />
                     ) : (
                       <div className="backup-list">
@@ -1879,32 +1951,41 @@ function App() {
                               </div>
                               <div>
                                 <strong>
-                                  {b.full ? '完整 eMMC 备份' : '区域备份'} · {b.model}
+                                  {b.full ? t('完整 eMMC 备份') : t('区域备份')} · {b.model}
                                 </strong>
                                 <small>
                                   {date(b.created)} ·{' '}
                                   {b.storage === 'usb'
-                                    ? 'USB 存储'
+                                    ? t('USB 存储')
                                     : b.storage === 'browser'
-                                      ? '旧版浏览器备份 · SD 暂存'
-                                      : '本地 SD 卡'}
+                                      ? t('旧版浏览器备份 · SD 暂存')
+                                      : t('本地 SD 卡')}
                                 </small>
                               </div>
-                              <span className="badge teal">{b.regions.length} 个区域</span>
+                              <span className="badge teal">
+                                {b.regions.length}
+                                {t('个区域')}
+                              </span>
                               <button
-                                title="下载备份包"
+                                title={t('下载备份包')}
                                 className="icon-button"
                                 onClick={() =>
-                                  launch('导出备份包', { op: 'backup_export', backup: b.id }, false)
+                                  launch(
+                                    t('导出备份包'),
+                                    { op: 'backup_export', backup: b.id },
+                                    false,
+                                  )
                                 }
                               >
                                 <Download size={17} />
                               </button>
                               <button
                                 className="icon-button danger-icon"
-                                title="删除备份"
+                                title={t('删除备份')}
                                 onClick={async () => {
-                                  const answer = window.prompt('输入备份标识确认删除：\n' + b.id);
+                                  const answer = window.prompt(
+                                    t('输入备份标识确认删除：\n') + b.id,
+                                  );
                                   if (answer !== b.id) return;
                                   try {
                                     await post('/backups/' + b.id + '/delete', { confirm: answer });
@@ -1923,7 +2004,7 @@ function App() {
                                   <span>
                                     <b>{names[r.region] || r.name}</b>
                                     <small>
-                                      {fmt(r.size)} · {r.compressed ? 'gzip' : '原始镜像'}
+                                      {fmt(r.size)} · {r.compressed ? 'gzip' : t('原始镜像')}
                                     </small>
                                   </span>
                                   <button
@@ -1931,7 +2012,7 @@ function App() {
                                     disabled={!disk?.writable || region?.region !== r.region}
                                     onClick={() =>
                                       launch(
-                                        '恢复区域备份',
+                                        t('恢复区域备份'),
                                         {
                                           ...targetArgs(),
                                           op: 'restore',
@@ -1939,11 +2020,11 @@ function App() {
                                           backup_region: r.region,
                                         },
                                         true,
-                                        '将备份区域恢复到当前选定区域：' + region?.path,
+                                        t('将备份区域恢复到当前选定区域：') + region?.path,
                                       )
                                     }
                                   >
-                                    恢复到选定区域
+                                    {t('恢复到选定区域')}
                                   </button>
                                 </div>
                               ))}
@@ -1954,18 +2035,20 @@ function App() {
                                 className="button secondary small"
                                 onClick={() =>
                                   launch(
-                                    '恢复完整 eMMC 备份',
+                                    t('恢复完整 eMMC 备份'),
                                     {
                                       ...targetArgs(disk!.regions[0]),
                                       op: 'restore_full',
                                       backup: b.id,
                                     },
                                     true,
-                                    '恢复用户区及两个 BOOT 区，覆盖目标的现有内容；不自动修改 EXT_CSD 启动配置。',
+                                    t(
+                                      '恢复用户区及两个 BOOT 区，覆盖目标的现有内容；不自动修改 EXT_CSD 启动配置。',
+                                    ),
                                   )
                                 }
                               >
-                                恢复整套备份
+                                {t('恢复整套备份')}
                                 <ArrowUpRight size={14} />
                               </button>
                             )}
@@ -1975,29 +2058,29 @@ function App() {
                     )}
                   </section>
                   <section className="panel">
-                    <PanelHead icon={ShieldCheck} title="操作前快照" />
+                    <PanelHead icon={ShieldCheck} title={t('操作前快照')} />
                     {snapshots.length ? (
                       <div className="table-scroll">
                         <table>
                           <thead>
                             <tr>
-                              <th>类型 / 时间</th>
-                              <th>目标 / 范围</th>
-                              <th>操作</th>
+                              <th>{t('类型 / 时间')}</th>
+                              <th>{t('目标 / 范围')}</th>
+                              <th>{t('操作')}</th>
                             </tr>
                           </thead>
                           <tbody>
                             {snapshots.map((s) => (
                               <tr key={s.id}>
                                 <td>
-                                  {s.kind === 'hex' ? '字节修改' : '分区表'}
+                                  {s.kind === 'hex' ? t('字节修改') : t('分区表')}
                                   <small>{date(s.created)}</small>
                                 </td>
                                 <td className="mono">
                                   {s.target || s.disk}
                                   <small>
                                     {s.kind === 'hex'
-                                      ? `偏移 ${s.offset} · ${fmt(s.size)}`
+                                      ? t('偏移 {0} · {1}', [s.offset, fmt(s.size)])
                                       : fmt(s.size)}
                                   </small>
                                 </td>
@@ -2007,7 +2090,7 @@ function App() {
                                     disabled={!disk?.writable || disk.identity !== s.disk}
                                     onClick={() =>
                                       launch(
-                                        '恢复操作前快照',
+                                        t('恢复操作前快照'),
                                         {
                                           ...targetArgs(
                                             s.kind === 'hex'
@@ -2018,11 +2101,13 @@ function App() {
                                           snapshot: s.id,
                                         },
                                         true,
-                                        '恢复保存的原始字节或分区表。字节回退会核对当前内容，分区表回退不会回退文件系统大小。',
+                                        t(
+                                          '恢复保存的原始字节或分区表。字节回退会核对当前内容，分区表回退不会回退文件系统大小。',
+                                        ),
                                       )
                                     }
                                   >
-                                    恢复快照
+                                    {t('恢复快照')}
                                   </button>
                                 </td>
                               </tr>
@@ -2031,7 +2116,9 @@ function App() {
                         </table>
                       </div>
                     ) : (
-                      <p className="empty-note">修改分区表或原始字节前，系统会自动保存快照。</p>
+                      <p className="empty-note">
+                        {t('修改分区表或原始字节前，系统会自动保存快照。')}
+                      </p>
                     )}
                   </section>
                 </>
@@ -2040,10 +2127,13 @@ function App() {
                 <section className="panel">
                   <PanelHead
                     icon={Activity}
-                    title="任务历史"
+                    title={t('任务历史')}
                     action={
                       <div className="button-group">
-                        <span className="badge">{activeJobs.length} 个任务进行中</span>
+                        <span className="badge">
+                          {activeJobs.length}
+                          {t('个任务进行中')}
+                        </span>
                         <CacheCleaner
                           mode="jobs"
                           api={api}
@@ -2059,7 +2149,7 @@ function App() {
                         <JobRow job={j} />
                         <div className="job-footer">
                           <span>
-                            {j.target || '备份文件'} · {date(j.created)}
+                            {j.target || t('备份文件')} · {date(j.created)}
                           </span>
                           <div>
                             {j.result?.download && j.state === 'completed' && (
@@ -2069,7 +2159,7 @@ function App() {
                                 download
                               >
                                 <Download size={14} />
-                                下载结果
+                                {t('下载结果')}
                               </a>
                             )}
                             {j.result?.stream &&
@@ -2081,7 +2171,7 @@ function App() {
                                   download
                                 >
                                   <Download size={14} />
-                                  流式下载
+                                  {t('流式下载')}
                                 </a>
                               )}
                             {['queued', 'running'].includes(j.state) && j.cancellable && (
@@ -2096,22 +2186,24 @@ function App() {
                                 }}
                               >
                                 <Square size={12} />
-                                取消任务
+                                {t('取消任务')}
                               </button>
                             )}
                           </div>
                         </div>
                         {!!j.logs?.length && (
                           <details>
-                            <summary>任务日志</summary>
+                            <summary>{t('任务日志')}</summary>
                             <pre>
-                              {j.logs.map((l) => date(l.time) + '  ' + l.message).join('\n')}
+                              {j.logs
+                                .map((l) => date(l.time) + '  ' + serverText(l.message))
+                                .join('\n')}
                             </pre>
                           </details>
                         )}
                         {j.result && (
                           <details>
-                            <summary>结果详情</summary>
+                            <summary>{t('结果详情')}</summary>
                             <pre>{JSON.stringify(j.result, null, 2)}</pre>
                           </details>
                         )}
@@ -2120,8 +2212,8 @@ function App() {
                   ) : (
                     <Empty
                       icon={Activity}
-                      title="还没有任务"
-                      text="备份、编辑、克隆和恢复操作会记录在这里。"
+                      title={t('还没有任务')}
+                      text={t('备份、编辑、克隆和恢复操作会记录在这里。')}
                     />
                   )}
                 </section>
@@ -2142,13 +2234,13 @@ function App() {
                 <>
                   <div className="two-columns">
                     <section className="panel">
-                      <PanelHead icon={Lock} title="管理员密码" />
+                      <PanelHead icon={Lock} title={t('管理员密码')} />
                       <label className="field">
-                        用户名
+                        {t('用户名')}
                         <input value={auth.username} readOnly />
                       </label>
                       <label className="field">
-                        当前密码
+                        {t('当前密码')}
                         <input
                           type="password"
                           autoComplete="current-password"
@@ -2157,7 +2249,7 @@ function App() {
                         />
                       </label>
                       <label className="field">
-                        新密码
+                        {t('新密码')}
                         <input
                           type="password"
                           autoComplete="new-password"
@@ -2165,11 +2257,11 @@ function App() {
                           maxLength={128}
                           value={newPassword}
                           onChange={(e) => setNewPassword(e.target.value)}
-                          placeholder="8–128 个字符"
+                          placeholder={t('8–128 个字符')}
                         />
                       </label>
                       <div className="info-strip">
-                        密码长度 8–128 个字符，使用随机盐 + scrypt 单向哈希保存，不保存明文。
+                        {t('密码长度 8–128 个字符，使用随机盐 + scrypt 单向哈希保存，不保存明文。')}
                       </div>
                       <button
                         className="button"
@@ -2186,38 +2278,38 @@ function App() {
                             });
                             setOldPassword('');
                             setNewPassword('');
-                            setNotice('密码已更新，其他登录会话已失效');
+                            setNotice(t('密码已更新，其他登录会话已失效'));
                           } catch (e) {
                             setError(String(e));
                           }
                         }}
                       >
-                        更新密码
+                        {t('更新密码')}
                       </button>
                     </section>
                     <section className="panel">
-                      <PanelHead icon={Settings} title="工作台信息" />
+                      <PanelHead icon={Settings} title={t('工作台信息')} />
                       <dl className="details-grid single">
-                        <Detail label="版本" value={settings?.version || '读取中…'} />
-                        <Detail label="访问端口" value="HTTP · 80" />
-                        <Detail label="运行位置" value="NanoPi R28S · 本地设备" />
-                        <Detail label="可用暂存空间" value={fmt(settings?.free || free)} />
-                        <Detail label="登录会话" value="最长 8 小时" />
-                        <Detail label="任务管理" value="后台执行 · 重启后不自动续写" />
+                        <Detail label={t('版本')} value={settings?.version || t('读取中…')} />
+                        <Detail label={t('访问端口')} value="HTTP · 80" />
+                        <Detail label={t('运行位置')} value={t('NanoPi R28S · 本地设备')} />
+                        <Detail label={t('可用暂存空间')} value={fmt(settings?.free || free)} />
+                        <Detail label={t('登录会话')} value={t('最长 8 小时')} />
+                        <Detail label={t('任务管理')} value={t('后台执行 · 重启后不自动续写')} />
                       </dl>
                       <div className="info-strip">
-                        BOOT 写保护仅按操作临时解除；RPMB 与永久保护配置不开放写入。
+                        {t('BOOT 写保护仅按操作临时解除；RPMB 与永久保护配置不开放写入。')}
                       </div>
                     </section>
                   </div>
                   <section className="panel">
-                    <PanelHead icon={Archive} title="缓存与历史管理" />
+                    <PanelHead icon={Archive} title={t('缓存与历史管理')} />
                     <p className="empty-note">
-                      在独立清理页面选择任务记录、操作快照、导出文件和上传暂存。
+                      {t('在独立清理页面选择任务记录、操作快照、导出文件和上传暂存。')}
                     </p>
                     <button className="button secondary" onClick={() => setPage('cache')}>
                       <Trash2 size={15} />
-                      打开缓存清理
+                      {t('打开缓存清理')}
                     </button>
                   </section>
                 </>
@@ -2227,16 +2319,17 @@ function App() {
           <footer>
             <span>
               <ShieldCheck size={13} />
-              系统 SD 卡已保护
+              {t('系统 SD 卡已保护')}
             </span>
-            <span>eMMC Studio · 所有数据留在设备上</span>
+            <span>{t('eMMC Studio · 所有数据留在设备上')}</span>
           </footer>
         </div>
       </main>
       {uploadProgress !== null && (
         <div className="upload-progress">
           <Loader2 size={17} className="spin" />
-          文件上传 <strong>{uploadProgress.toFixed(1)}%</strong>
+          {t('文件上传')}
+          <strong>{uploadProgress.toFixed(1)}%</strong>
           <div className="progress">
             <i style={{ width: uploadProgress + '%' }} />
           </div>
@@ -2256,7 +2349,7 @@ function App() {
             </div>
             {dialog.args.target && (
               <div className="target-summary">
-                <small>操作目标</small>
+                <small>{t('操作目标')}</small>
                 <strong>{dialog.args.target}</strong>
                 <span>
                   {disk?.model} ·{' '}
@@ -2267,7 +2360,7 @@ function App() {
             {dialog.note && <p className="modal-note">{dialog.note}</p>}
             {dialog.args.op === 'range_export' && (
               <div className="range-presets">
-                <span>选择导出范围</span>
+                <span>{t('选择导出范围')}</span>
                 <button
                   className="button secondary small"
                   onClick={() =>
@@ -2280,7 +2373,9 @@ function App() {
                     })
                   }
                 >
-                  整个区域（{fmt(region!.size)}）
+                  {t('整个区域（')}
+                  {fmt(region!.size)}
+                  {t('）')}
                 </button>
                 <button
                   className="button secondary small"
@@ -2300,11 +2395,12 @@ function App() {
                     })
                   }
                 >
-                  从当前偏移到末尾
+                  {t('从当前偏移到末尾')}
                 </button>
                 <small>
-                  起点 {dialog.args.offset.toLocaleString('zh-CN')} 字节 ·
-                  直接流式传输，可导出整个区域；关闭下载会中断传输。
+                  {t('起点')}
+                  {dialog.args.offset.toLocaleString(locale)}
+                  {t('字节 · 直接流式传输，可导出整个区域；关闭下载会中断传输。')}
                 </small>
               </div>
             )}
@@ -2412,19 +2508,23 @@ function App() {
             {dialog.args.op === 'hex_write' && (
               <div className="hex-diff">
                 <div>
-                  <small>修改前</small>
+                  <small>{t('修改前')}</small>
                   <code>{hex?.hex?.slice(0, 256)}</code>
                 </div>
                 <div>
-                  <small>修改后</small>
+                  <small>{t('修改后')}</small>
                   <code>{dialog.args.hex.slice(0, 256)}</code>
                 </div>
-                <small>预览前 128 字节，写入总长度 {dialog.args.hex.length / 2} 字节。</small>
+                <small>
+                  {t('预览前 128 字节，写入总长度')}
+                  {dialog.args.hex.length / 2}
+                  {t('字节。')}
+                </small>
               </div>
             )}
             <div className="modal-buttons">
               <button className="button secondary" onClick={() => setDialog(null)}>
-                取消
+                {t('取消')}
               </button>
               <button
                 className={'button ' + (dialog.danger ? 'danger' : '')}
@@ -2441,7 +2541,8 @@ function App() {
                 }
                 onClick={submit}
               >
-                {loading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}确认并提交
+                {loading ? <Loader2 size={16} className="spin" /> : <Check size={16} />}
+                {t('确认并提交')}
               </button>
             </div>
           </section>
@@ -2465,12 +2566,12 @@ function App() {
               spellCheck={false}
             />
             <div className="modal-buttons">
-              <span className="helper">UTF-8 · 最多 2 MiB</span>
+              <span className="helper">{t('UTF-8 · 最多 2 MiB')}</span>
               <button
                 className="button"
                 disabled={!disk?.writable || !fileEditing}
                 onClick={() => {
-                  fileAction('保存文本文件', {
+                  fileAction(t('保存文本文件'), {
                     action: 'text',
                     path: textEdit.path,
                     text: textEdit.text,
@@ -2480,7 +2581,7 @@ function App() {
                   setTextEdit(null);
                 }}
               >
-                核对并保存
+                {t('核对并保存')}
               </button>
             </div>
           </section>
@@ -2509,7 +2610,7 @@ function Login({
     setLoading(true);
     setError('');
     try {
-      if (!configured && password !== repeat) throw new Error('两次输入的密码不一致');
+      if (!configured && password !== repeat) throw new Error(t('两次输入的密码不一致'));
       const a = await post(
         configured ? '/auth/login' : '/auth/setup',
         configured ? { username, password } : { code, password },
@@ -2535,14 +2636,14 @@ function Login({
         <div className="login-message">
           <span className="eyebrow">YOUR STORAGE. YOUR CONTROL.</span>
           <h1>
-            每一个字节，
+            {t('每一个字节，')}
             <br />
-            都在掌握之中。
+            {t('都在掌握之中。')}
           </h1>
           <p>
-            从分区管理到完整备份，
+            {t('从分区管理到完整备份，')}
             <br />
-            为你的 eMMC 提供一个清晰的工作空间。
+            {t('为你的 eMMC 提供一个清晰的工作空间。')}
           </p>
           <div className="login-chip">
             <Cpu size={110} />
@@ -2551,22 +2652,25 @@ function Login({
         </div>
         <div className="login-foot">
           <ShieldCheck size={16} />
-          本地运行，数据留在设备上。
+          {t('本地运行，数据留在设备上。')}
         </div>
       </div>
       <div className="login-form">
+        <LanguageSelector dirty={!!password || !!code} />
         <span className="badge teal">
           <Lock size={13} />
-          设备管理
+          {t('设备管理')}
         </span>
-        <h2>{configured ? '欢迎回来' : '初始化工作台'}</h2>
+        <h2>{configured ? t('欢迎回来') : t('初始化工作台')}</h2>
         <p>
-          {configured ? '登录以查看和管理存储设备。' : '使用串口提供的一次性设置码创建管理员密码。'}
+          {configured
+            ? t('登录以查看和管理存储设备。')
+            : t('使用串口提供的一次性设置码创建管理员密码。')}
         </p>
         <form onSubmit={submit}>
           {!configured && (
             <label className="field">
-              一次性设置码
+              {t('一次性设置码')}
               <input
                 autoFocus
                 value={code}
@@ -2577,11 +2681,11 @@ function Login({
             </label>
           )}
           <label className="field">
-            管理员账号
+            {t('管理员账号')}
             <input value={username} readOnly autoComplete="username" />
           </label>
           <label className="field">
-            {configured ? '密码' : '设置密码'}
+            {configured ? t('密码') : t('设置密码')}
             <input
               type="password"
               value={password}
@@ -2590,12 +2694,12 @@ function Login({
               minLength={configured ? 1 : 8}
               maxLength={128}
               required
-              placeholder={configured ? '输入管理员密码' : '8–128 个字符'}
+              placeholder={configured ? t('输入管理员密码') : t('8–128 个字符')}
             />
           </label>
           {!configured && (
             <label className="field">
-              再次输入密码
+              {t('再次输入密码')}
               <input
                 type="password"
                 value={repeat}
@@ -2608,11 +2712,11 @@ function Login({
           {error && <div className="alert error">{error}</div>}
           <button className="button full" disabled={loading}>
             {loading ? <Loader2 className="spin" size={18} /> : null}
-            {configured ? '登录工作台' : '创建管理员并进入'}
+            {configured ? t('登录工作台') : t('创建管理员并进入')}
             <ArrowUpRight size={17} />
           </button>
         </form>
-        <small>eMMC Studio · 局域网存储工作台</small>
+        <small>{t('eMMC Studio · 局域网存储工作台')}</small>
       </div>
     </div>
   );
@@ -2625,6 +2729,7 @@ function ForcePassword({ username, onChanged }: { username: string; onChanged: (
     [loading, setLoading] = useState(false);
   return (
     <div className="force-password">
+      <LanguageSelector dirty={!!password || !!old} />
       <div className="brand">
         <span className="brand-icon">
           <Cpu size={26} />
@@ -2636,18 +2741,20 @@ function ForcePassword({ username, onChanged }: { username: string; onChanged: (
       <section className="panel">
         <span className="badge amber">
           <Lock size={13} />
-          首次登录
+          {t('首次登录')}
         </span>
-        <h2>设置你的专属密码</h2>
+        <h2>{t('设置你的专属密码')}</h2>
         <p className="panel-description">
-          账号 {username} 使用初始密码。修改完成后即可进入存储工作台。
+          {t('账号')}
+          {username}
+          {t('使用初始密码。修改完成后即可进入存储工作台。')}
         </p>
         <form
           onSubmit={async (e) => {
             e.preventDefault();
             setLoading(true);
             try {
-              if (password !== repeat) throw new Error('两次输入的密码不一致');
+              if (password !== repeat) throw new Error(t('两次输入的密码不一致'));
               await post('/auth/password', { old, password });
               onChanged();
             } catch (e) {
@@ -2658,7 +2765,7 @@ function ForcePassword({ username, onChanged }: { username: string; onChanged: (
           }}
         >
           <label className="field">
-            当前密码
+            {t('当前密码')}
             <input
               type="password"
               value={old}
@@ -2668,7 +2775,7 @@ function ForcePassword({ username, onChanged }: { username: string; onChanged: (
             />
           </label>
           <label className="field">
-            新密码
+            {t('新密码')}
             <input
               type="password"
               value={password}
@@ -2676,12 +2783,12 @@ function ForcePassword({ username, onChanged }: { username: string; onChanged: (
               minLength={8}
               maxLength={128}
               autoComplete="new-password"
-              placeholder="8–128 个字符"
+              placeholder={t('8–128 个字符')}
               required
             />
           </label>
           <label className="field">
-            再次输入新密码
+            {t('再次输入新密码')}
             <input
               type="password"
               value={repeat}
@@ -2693,7 +2800,8 @@ function ForcePassword({ username, onChanged }: { username: string; onChanged: (
           </label>
           {error && <div className="alert error">{error}</div>}
           <button className="button full" disabled={loading}>
-            {loading ? <Loader2 className="spin" size={16} /> : <Check size={16} />}修改密码并进入
+            {loading ? <Loader2 className="spin" size={16} /> : <Check size={16} />}
+            {t('修改密码并进入')}
           </button>
         </form>
         <button
@@ -2703,7 +2811,7 @@ function ForcePassword({ username, onChanged }: { username: string; onChanged: (
             location.reload();
           }}
         >
-          退出登录
+          {t('退出登录')}
         </button>
       </section>
     </div>
@@ -2788,7 +2896,7 @@ function JobRow({ job: j, compact = false }: { job: Job; compact?: boolean }) {
       </div>
       <div className="job-main">
         <div className="job-name">
-          <strong>{j.title}</strong>
+          <strong>{serverText(j.title)}</strong>
           <span
             className={
               'badge ' + (j.state === 'completed' ? 'teal' : j.state === 'failed' ? 'red' : '')
@@ -2798,7 +2906,7 @@ function JobRow({ job: j, compact = false }: { job: Job; compact?: boolean }) {
           </span>
         </div>
         <small>
-          {j.phase}
+          {serverText(j.phase)}
           {j.total > 0 ? ' · ' + fmt(j.bytes) + ' / ' + fmt(j.total) : ''}
           {j.state === 'running' && j.speed > 0 ? ' · ' + fmt(j.speed) + '/s' : ''}
         </small>
@@ -2807,7 +2915,7 @@ function JobRow({ job: j, compact = false }: { job: Job; compact?: boolean }) {
             <i style={{ width: j.progress + '%' }} />
           </div>
         )}
-        {j.error && <p className="job-error">{j.error}</p>}
+        {j.error && <p className="job-error">{serverText(j.error)}</p>}
       </div>
       <b className="job-percent">
         {j.state === 'running'

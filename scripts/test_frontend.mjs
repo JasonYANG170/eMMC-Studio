@@ -5,6 +5,7 @@ const compiler = spawnSync(
   process.execPath,
   [
     'node_modules/typescript/bin/tsc',
+    'src/i18n.ts',
     'src/units.ts',
     'src/layout.ts',
     'src/downloads.ts',

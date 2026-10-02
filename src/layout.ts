@@ -1,3 +1,4 @@
+import { t, locale } from './i18n.js';
 export const partitionColors = [
   '#3478db',
   '#14a38b',
@@ -23,6 +24,6 @@ export function resizeLimit(
 }
 export function hexPageOffset(start: number, length: number, page: number) {
   if (!Number.isSafeInteger(page) || page < 1 || page > Math.ceil(length / 256))
-    throw new Error('页码超出选定范围');
+    throw new Error(t('页码超出选定范围'));
   return start + (page - 1) * 256;
 }

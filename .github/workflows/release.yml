@@ -33,6 +33,8 @@ jobs:
           python tests/test_cache_linux.py
           python tests/test_extcsd_lock.py
           python tests/test_cli.py
+          python tests/test_i18n.py
+          python scripts/generate_locales.py --check
           python tests/test_update.py
       - name: CLI loop-device integration
         run: |

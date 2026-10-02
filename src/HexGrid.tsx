@@ -1,3 +1,4 @@
+import { t, locale } from './i18n.js';
 import { useEffect, useState } from 'react';
 import { hexPageOffset } from './layout';
 function HexByte({
@@ -98,7 +99,10 @@ export function HexGrid({
       setJump('');
       return;
     }
-    if (value !== original && !window.confirm('当前有未保存的字节修改，跳页将放弃这些修改。继续？'))
+    if (
+      value !== original &&
+      !window.confirm(t('当前有未保存的字节修改，跳页将放弃这些修改。继续？'))
+    )
       return;
     setPending(n);
     onRead(rangeStart + Math.floor(n / 256) * 65536);
@@ -112,24 +116,30 @@ export function HexGrid({
   return (
     <>
       <div className="hex-grid-controls">
-        <span>直接编辑 HEX 或 ASCII · Enter / 离开单元格提交 · {changed} 字节已修改</span>
+        <span>
+          {t('直接编辑 HEX 或 ASCII · Enter / 离开单元格提交 ·')}
+          {changed}
+          {t('字节已修改')}
+        </span>
         <div>
           <button
             className="button secondary small"
             disabled={loading || !page}
             onClick={() => navigate(page - 1)}
           >
-            上一页
+            {t('上一页')}
           </button>
           <span>
-            第 {(page + 1).toLocaleString()} / {total.toLocaleString()} 页
+            {t('第')}
+            {(page + 1).toLocaleString()} / {total.toLocaleString()}
+            {t('页')}
           </span>
           <button
             className="button secondary small"
             disabled={loading || page + 1 >= total}
             onClick={() => navigate(page + 1)}
           >
-            下一页
+            {t('下一页')}
           </button>
         </div>
         <form
@@ -140,9 +150,9 @@ export function HexGrid({
           }}
         >
           <label>
-            跳转页码
+            {t('跳转页码')}
             <input
-              aria-label="跳转页码"
+              aria-label={t('跳转页码')}
               type="number"
               min={1}
               max={total}
@@ -158,7 +168,7 @@ export function HexGrid({
               loading || !Number.isInteger(Number(jump)) || Number(jump) < 1 || Number(jump) > total
             }
           >
-            跳转
+            {t('跳转')}
           </button>
           <button
             type="button"
@@ -166,7 +176,7 @@ export function HexGrid({
             disabled={loading || page === 0}
             onClick={() => navigate(0)}
           >
-            首页
+            {t('首页')}
           </button>
           <button
             type="button"
@@ -174,13 +184,15 @@ export function HexGrid({
             disabled={loading || page === total - 1}
             onClick={() => navigate(total - 1)}
           >
-            末页
+            {t('末页')}
           </button>
         </form>
         <small>
-          每页 256 字节，页码覆盖整个选定读取范围。当前范围内第 {(page * 256 + 1).toLocaleString()}–
-          {Math.min((page + 1) * 256, rangeLength).toLocaleString()} 字节，共{' '}
-          {rangeLength.toLocaleString()} 字节；按需加载，不限制总页数。ASCII 支持可打印字符。
+          {t('每页 256 字节，页码覆盖整个选定读取范围。当前范围内第')}
+          {(page * 256 + 1).toLocaleString()}–
+          {Math.min((page + 1) * 256, rangeLength).toLocaleString()}
+          {t('字节，共')} {rangeLength.toLocaleString()}
+          {t('字节；按需加载，不限制总页数。ASCII 支持可打印字符。')}
         </small>
       </div>
       <div className="hex-grid-scroll">

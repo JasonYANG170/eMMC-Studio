@@ -1,3 +1,4 @@
+import { t, locale, serverText } from './i18n.js';
 import { useEffect, useState } from 'react';
 import { Download, RefreshCw, ShieldCheck, Upload } from 'lucide-react';
 
@@ -44,13 +45,15 @@ export function UpgradePage({ api, post }: Props) {
     }
   };
   const install = async (source: 'online' | 'local') => {
-    if (!window.confirm('升级将短暂重启网页和磁盘服务。管理员、备份和任务数据将保留。是否开始？'))
+    if (
+      !window.confirm(t('升级将短暂重启网页和磁盘服务。管理员、备份和任务数据将保留。是否开始？'))
+    )
       return;
     await action(async () => {
       let token: string | undefined;
       if (source === 'local') {
         if (!file || !file.size || file.size > 128 * 1024 * 1024)
-          throw new Error('请选择不超过 128 MiB 的官方签名升级包');
+          throw new Error(t('请选择不超过 128 MiB 的官方签名升级包'));
         const created = await post('/uploads', { name: file.name, size: file.size });
         token = created.id;
         const chunk = 2 * 1024 * 1024;
@@ -71,20 +74,23 @@ export function UpgradePage({ api, post }: Props) {
     <>
       {error && <div className="alert error">{error}</div>}
       {!connected && (
-        <p className="muted">网页服务暂时断开，正在自动重新连接。升级任务在后台继续运行。</p>
+        <p className="muted">{t('网页服务暂时断开，正在自动重新连接。升级任务在后台继续运行。')}</p>
       )}
       <section className="panel">
         <div className="panel-head">
           <h2>
-            <ShieldCheck size={21} /> 应用升级
+            <ShieldCheck size={21} />
+            {t('应用升级')}
           </h2>
-          <span className="badge">官方签名验证</span>
+          <span className="badge">{t('官方签名验证')}</span>
         </div>
         <p>
-          当前版本 <strong>{status?.current || '读取中…'}</strong> · 更新源 JasonYANG170/eMMC-Studio
+          {t('当前版本')}
+          <strong>{status?.current || t('读取中…')}</strong>
+          {t('· 更新源 JasonYANG170/eMMC-Studio')}
         </p>
         <p className="muted">
-          升级只更新应用程序。有进行中的磁盘任务时会拒绝安装；关闭浏览器不会取消升级。
+          {t('升级只更新应用程序。有进行中的磁盘任务时会拒绝安装；关闭浏览器不会取消升级。')}
         </p>
         <label className="upgrade-choice">
           <input
@@ -93,33 +99,36 @@ export function UpgradePage({ api, post }: Props) {
             onChange={(e) => setReinstall(e.target.checked)}
             disabled={disabled}
           />{' '}
-          允许重新安装同版本
+          {t('允许重新安装同版本')}
         </label>
       </section>
       <div className="two-columns">
         <section className="panel">
           <div className="panel-head">
             <h2>
-              <Download size={21} /> 在线升级
+              <Download size={21} />
+              {t('在线升级')}
             </h2>
           </div>
-          <p>从 GitHub Release 检测最新稳定版本并下载升级包。</p>
+          <p>{t('从 GitHub Release 检测最新稳定版本并下载升级包。')}</p>
           <button
             className="button secondary"
             disabled={disabled}
             onClick={() => action(async () => setRelease(await post('/upgrade/check', {})))}
           >
-            <RefreshCw size={16} /> 检查更新
+            <RefreshCw size={16} />
+            {t('检查更新')}
           </button>
           {release && (
             <>
               <p>
-                最新版本 <strong>{release.version}</strong> · {(release.size / 1048576).toFixed(2)}{' '}
-                MiB · {release.available ? '有新版本' : '已是最新版本'}
+                {t('最新版本')}
+                <strong>{release.version}</strong> · {(release.size / 1048576).toFixed(2)} MiB ·{' '}
+                {release.available ? t('有新版本') : t('已是最新版本')}
               </p>
               <p>
                 <a href={release.release_url} target="_blank" rel="noreferrer">
-                  查看发布说明
+                  {t('查看发布说明')}
                 </a>
               </p>
               <button
@@ -127,7 +136,7 @@ export function UpgradePage({ api, post }: Props) {
                 disabled={disabled || (!release.available && !reinstall)}
                 onClick={() => install('online')}
               >
-                下载并升级
+                {t('下载并升级')}
               </button>
             </>
           )}
@@ -135,15 +144,17 @@ export function UpgradePage({ api, post }: Props) {
         <section className="panel">
           <div className="panel-head">
             <h2>
-              <Upload size={21} /> 本地导入
+              <Upload size={21} />
+              {t('本地导入')}
             </h2>
           </div>
           <p>
-            选择 Release 中的 <strong>eMMC-Studio-update.tar.gz</strong>
-            。可在设备离线时安装，签名验证在设备本地完成。
+            {t('选择 Release 中的')}
+            <strong>eMMC-Studio-update.tar.gz</strong>
+            {t('。可在设备离线时安装，签名验证在设备本地完成。')}
           </p>
           <label className="field">
-            官方升级包
+            {t('官方升级包')}
             <input
               type="file"
               accept=".gz,.tar.gz"
@@ -151,24 +162,33 @@ export function UpgradePage({ api, post }: Props) {
               onChange={(e) => setFile(e.target.files?.[0] || null)}
             />
           </label>
-          {upload !== null && <p>上传中 {upload}%</p>}
+          {upload !== null && (
+            <p>
+              {t('上传中')}
+              {upload}%
+            </p>
+          )}
           <button className="button" disabled={disabled || !file} onClick={() => install('local')}>
-            <Upload size={16} /> 导入并升级
+            <Upload size={16} />
+            {t('导入并升级')}
           </button>
         </section>
       </div>
       {task && task.state !== 'idle' && (
         <section className="panel">
           <div className="panel-head">
-            <h2>升级状态</h2>
+            <h2>{t('升级状态')}</h2>
             <span className="badge">
-              {{ running: '运行中', completed: '已完成', failed: '失败', interrupted: '中断' }[
-                task.state as string
-              ] || task.state}
+              {{
+                running: t('运行中'),
+                completed: t('已完成'),
+                failed: t('失败'),
+                interrupted: t('中断'),
+              }[task.state as string] || task.state}
             </span>
           </div>
           <p>
-            {task.from} {task.to ? `→ ${task.to}` : ''} · {task.phase}
+            {task.from} {task.to ? `→ ${task.to}` : ''} · {serverText(task.phase)}
           </p>
           <progress
             value={task.progress || 0}
@@ -176,12 +196,13 @@ export function UpgradePage({ api, post }: Props) {
             style={{ width: '100%', accentColor: 'var(--primary)' }}
           />
           <p className="muted">
-            任务 {task.id} · {task.progress || 0}%
+            {t('任务')}
+            {task.id} · {task.progress || 0}%
           </p>
-          {task.error && <div className="alert error">{task.error}</div>}
+          {task.error && <div className="alert error">{serverText(task.error)}</div>}
           {task.state === 'completed' && (
             <button className="button secondary" onClick={() => window.location.reload()}>
-              刷新页面加载新版
+              {t('刷新页面加载新版')}
             </button>
           )}
         </section>

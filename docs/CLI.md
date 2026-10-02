@@ -22,6 +22,7 @@ sudo emmc-studio --dry-run partition create /dev/mmcblk2 --start 1MiB --size 100
 sudo emmc-studio --no-wait backup create /dev/mmcblk2boot0
 ```
 
+- `--lang auto|zh-CN|en`：选择语言；自动模式读取 `EMMC_STUDIO_LANG` 和系统 locale。显式选项优先，放在子命令前，例如 `sudo emmc-studio --lang en devices`。机器 JSON、文件内容及参数保持原样。
 - `--json`：标准输出为 JSON，进度和目标提示写入标准错误，方便脚本处理。
 - `--dry-run`：查看准备提交的存储任务参数，不提交任务、不暂存输入文件。只做 CLI 参数转换及设备发现，不等同于工作进程的完整容量、挂载和空间预检。任务取消、备份删除、任务/缓存清理不支持该参数，会拒绝执行。
 - `--no-wait`：提交后台任务后立即返回 ID。默认等待任务结束并显示阶段、百分比及速度。

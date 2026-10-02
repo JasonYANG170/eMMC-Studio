@@ -1,3 +1,4 @@
+import { t, locale } from './i18n.js';
 import { partitionColors } from './layout';
 type Region = {
   path: string;
@@ -50,13 +51,14 @@ export function RegionMap({
   return (
     <div className="graphical-regions">
       <div className="region-rail-label">
-        用户区 · {size(disk.size)}
+        {t('用户区 ·')}
+        {size(disk.size)}
         {onSelect && (
           <button
             className={'text-button ' + (selected === disk.regions[0]?.path ? 'active' : '')}
             onClick={() => onSelect(disk.regions[0].path)}
           >
-            选择整个用户区
+            {t('选择整个用户区')}
           </button>
         )}
       </div>
@@ -72,7 +74,10 @@ export function RegionMap({
             }),
           )
         ) : (
-          <div className="unallocated">未分区 · {size(disk.size)}</div>
+          <div className="unallocated">
+            {t('未分区 ·')}
+            {size(disk.size)}
+          </div>
         )}
       </div>
       <div className="region-key">
@@ -84,19 +89,20 @@ export function RegionMap({
                 background: partitionColors[partitions.indexOf(r) % partitionColors.length],
               }}
             />
-            {r.name} · {r.fstype || '未格式化'} · {size(r.size)}
+            {r.name} · {r.fstype || t('未格式化')} · {size(r.size)}
           </span>
         ))}
       </div>
       {boots.length > 0 && (
         <>
-          <div className="region-rail-label">硬件启动区 · 各区域有独立地址空间</div>
+          <div className="region-rail-label">{t('硬件启动区 · 各区域有独立地址空间')}</div>
           <div className="boot-region-rail">{boots.map((r) => item(r))}</div>
         </>
       )}
       {selected && (
         <div className="region-selection">
-          当前区域：<b>{selected}</b>
+          {t('当前区域：')}
+          <b>{selected}</b>
         </div>
       )}
     </div>

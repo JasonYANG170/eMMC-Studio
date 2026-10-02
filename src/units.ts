@@ -1,9 +1,10 @@
+import { t } from './i18n.js';
 export const byteUnits = { B: 1, KiB: 1024, MiB: 1048576, GiB: 1073741824, 扇区: 512 } as const;
 export type ByteUnit = keyof typeof byteUnits;
 
 export function partitionSectors(bytes: number): number {
   if (!Number.isSafeInteger(bytes) || bytes < 1048576 || bytes % 1048576 !== 0)
-    throw new Error('分区起点和大小需按 1 MiB 对齐');
+    throw new Error(t('分区起点和大小需按 1 MiB 对齐'));
   return bytes / 512;
 }
 
@@ -16,7 +17,7 @@ export function readWindow(start: number, length: number, offset = start) {
     offset < start ||
     offset >= start + length
   )
-    throw new Error('读取范围无效');
+    throw new Error(t('读取范围无效'));
   return {
     offset,
     length: Math.min(65536, start + length - offset),
