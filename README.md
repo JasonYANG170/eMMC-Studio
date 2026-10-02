@@ -42,7 +42,7 @@ sudo apt-get install -y curl ca-certificates python3
 
 ## 方法一：脚本一键部署（推荐）
 
-发布包由 GitHub Actions 构建，设备**不需要 Node.js，不在设备上编译前端**。脚本下载预构建包，核对 SHA-256，检查归档路径，安装依赖与两个开机自启服务。
+发布包由 GitHub Actions 构建，设备**不需要 Node.js，不在设备上编译前端**。脚本下载预构建包，核对 SHA-256，检查归档路径，安装依赖与三个开机自启服务（Web、磁盘工作进程与独立升级服务）。
 
 在设备 SSH 或串口终端执行：
 
@@ -149,7 +149,7 @@ sudo sh deploy/install.sh
 | `/run/emmc-worker/control.sock` | 受限工作进程接口                     |
 
 ```sh
-systemctl status emmc-worker emmc-web --no-pager
+systemctl status emmc-worker emmc-web emmc-updater --no-pager
 journalctl -u emmc-worker -u emmc-web -n 100 --no-pager
 sudo systemctl restart emmc-worker emmc-web
 ```

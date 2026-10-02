@@ -1,6 +1,7 @@
 """Strict, signed application packages. The trust anchor is shipped with the app."""
 
 import hashlib
+import gzip
 import json
 import re
 import subprocess
@@ -68,29 +69,38 @@ def unpack(package, destination, current, reinstall=False):
     if not 0 < package.stat().st_size <= MAX_PACKAGE:
         raise ValueError("升级包大小必须在 1–128 MiB 范围内")
     destination.mkdir(parents=True, exist_ok=True)
-    with tarfile.open(package, "r:gz") as archive:
-        members = []
-        for _ in range(4):
-            member = archive.next()
-            if member is None:
-                break
-            members.append(member)
-        if (
-            len(members) != 3
-            or {m.name for m in members}
-            != {"manifest.json", "manifest.sig", "payload.tar.gz"}
-            or any(not m.isfile() for m in members)
-        ):
+
+    # Parse only ordinary fixed-name outer headers. Generic tar readers may allocate
+    # huge unsigned PAX metadata or seek through a compression bomb before verification.
+    def header(source, name, limit, exact=False):
+        try:
+            member = tarfile.TarInfo.frombuf(source.read(512), "utf-8", "strict")
+        except (tarfile.HeaderError, UnicodeError) as error:
+            raise ValueError("升级包头无效") from error
+        if member.name != name or not member.isfile():
             raise ValueError("升级包文件清单无效")
-        indexed = {m.name: m for m in members}
-        if (
-            indexed["manifest.json"].size > 16384
-            or indexed["manifest.sig"].size != 64
-            or indexed["payload.tar.gz"].size > MAX_PACKAGE
-        ):
+        if not 0 < member.size <= limit or (exact and member.size != limit):
             raise ValueError("升级包超出大小限制")
-        raw = archive.extractfile("manifest.json").read()
-        verify_signature(raw, archive.extractfile("manifest.sig").read())
+        return member.size
+
+    def content(source, size):
+        data = source.read(size)
+        if len(data) != size:
+            raise ValueError("升级包不完整")
+        return data
+
+    def padding(source, size):
+        if any(content(source, (-size) % 512)):
+            raise ValueError("升级包填充无效")
+
+    with gzip.open(package, "rb") as source:
+        count = header(source, "manifest.json", 16384)
+        raw = content(source, count)
+        padding(source, count)
+        count = header(source, "manifest.sig", 64, exact=True)
+        signature = content(source, count)
+        padding(source, count)
+        verify_signature(raw, signature)
         meta = json.loads(raw)
         if meta.get("schema") != 1 or meta.get("platform") != "linux-systemd-debian":
             raise ValueError("升级包平台或格式不兼容")
@@ -101,12 +111,18 @@ def unpack(package, destination, current, reinstall=False):
             raise ValueError("当前版本过旧，请先使用一键部署脚本升级")
         payload = destination / "payload.tar.gz"
         digest = hashlib.sha256()
-        with archive.extractfile("payload.tar.gz") as source, payload.open(
-            "wb"
-        ) as output:
-            while chunk := source.read(1024 * 1024):
+        count = header(source, "payload.tar.gz", MAX_PACKAGE)
+        remaining = count
+        with payload.open("wb") as output:
+            while remaining:
+                chunk = content(source, min(remaining, 1024 * 1024))
+                remaining -= len(chunk)
                 digest.update(chunk)
                 output.write(chunk)
+        padding(source, count)
+        trailer = source.read(65537)
+        if len(trailer) > 65536 or any(trailer):
+            raise ValueError("升级包包含多余内容")
         if digest.hexdigest() != meta.get(
             "sha256"
         ) or payload.stat().st_size != meta.get("size"):

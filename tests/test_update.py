@@ -176,6 +176,21 @@ class PackageTests(unittest.TestCase):
         ):
             self.unpack(bundle)
 
+    def test_unsigned_huge_header_is_rejected_before_reading_body(self):
+        import gzip
+
+        for kind in (tarfile.REGTYPE, tarfile.XHDTYPE):
+            with self.subTest(kind=kind):
+                info = tarfile.TarInfo("manifest.json")
+                info.type = kind
+                info.size = 10**12
+                package = self.root / "bomb.tar.gz"
+                package.write_bytes(
+                    gzip.compress(info.tobuf(format=tarfile.GNU_FORMAT))
+                )
+                with self.assertRaisesRegex(ValueError, "大小|清单"):
+                    self.unpack(package)
+
 
 @unittest.skipUnless(sys.platform == "linux", "Linux updater service")
 class UpdaterTests(PackageTests):
