@@ -45,11 +45,13 @@ def main():
         server.manager = manager
         threading.Thread(target=server.serve_forever, daemon=True).start()
 
-        def command(*args, ok=True):
+        def command(*args, ok=True, lang="zh-CN"):
             result = subprocess.run(
                 [
                     sys.executable,
                     str(ROOT / "backend/cli.py"),
+                    "--lang",
+                    lang,
                     "--socket",
                     endpoint,
                     "--json",
@@ -85,6 +87,9 @@ def main():
         manager.busy.clear()
         root_client.rpc("upgrade_freeze")
         assert "升级" in command("partition", "table", source, "gpt", ok=False)
+        assert "upgrade in progress" in command(
+            "partition", "table", source, "gpt", ok=False, lang="en"
+        )
         assert not manager.jobs()
         root_client.rpc("upgrade_unfreeze")
         info = command("devices")
