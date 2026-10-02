@@ -22,8 +22,12 @@ const compiler = spawnSync(
 );
 if (compiler.status !== 0) process.exit(compiler.status || 1);
 for (const file of readdirSync('tests')
-  .filter((name) => name.endsWith('.mjs'))
+  .filter((name) => name.endsWith('.mjs') && name !== 'locale-fixture.mjs')
   .sort()) {
-  const result = spawnSync(process.execPath, ['tests/' + file], { stdio: 'inherit' });
+  const result = spawnSync(
+    process.execPath,
+    ['--import', './tests/locale-fixture.mjs', 'tests/' + file],
+    { stdio: 'inherit' },
+  );
   if (result.status !== 0) process.exit(result.status || 1);
 }
