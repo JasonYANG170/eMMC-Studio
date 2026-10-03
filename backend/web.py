@@ -116,6 +116,12 @@ def save_auth(data):
             f.flush()
             os.fsync(f.fileno())
         os.replace(tmp, AUTH)
+        # Persist the renamed directory entry before reporting success.
+        directory_fd = os.open(AUTH.parent, os.O_RDONLY | os.O_DIRECTORY)
+        try:
+            os.fsync(directory_fd)
+        finally:
+            os.close(directory_fd)
     finally:
         tmp.unlink(missing_ok=True)
 
