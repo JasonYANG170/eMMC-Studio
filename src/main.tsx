@@ -539,24 +539,21 @@ function App() {
         }}
       />
     );
+  const selectRegion = (path: string) => {
+    setRegionPath(path);
+    if (page === 'hex') {
+      const selectedRegion = disk?.regions.find((r) => r.path === path);
+      if (selectedRegion) {
+        setOffset('0');
+        setHexLength(String(selectedRegion.size));
+        setHex(null);
+        setHexRange(null);
+      }
+    }
+  };
   const regionSelector = disk ? (
     <div className="region-select graphical-select">
-      <RegionMap
-        disk={disk}
-        selected={region?.path}
-        onSelect={(path) => {
-          setRegionPath(path);
-          if (page === 'hex') {
-            const selectedRegion = disk.regions.find((r) => r.path === path);
-            if (selectedRegion) {
-              setOffset('0');
-              setHexLength(String(selectedRegion.size));
-              setHex(null);
-              setHexRange(null);
-            }
-          }
-        }}
-      />
+      <RegionMap disk={disk} selected={region?.path} onSelect={selectRegion} />
       {disk.protected && (
         <span className="badge amber">
           <Lock size={12} />
@@ -1517,6 +1514,26 @@ function App() {
                     title={t('原始字节编辑器')}
                     action={<span className="badge">{t('每页 256 B · 按需加载 64 KiB')}</span>}
                   />
+                  <div className="region-select">
+                    <label htmlFor="hex-region-select">{t('选择存储区域')}</label>
+                    <select
+                      id="hex-region-select"
+                      value={region?.path || ''}
+                      onChange={(e) => selectRegion(e.target.value)}
+                    >
+                      {disk.regions.map((r) => (
+                        <option key={r.path} value={r.path}>
+                          {r.region === 'partition'
+                            ? r.partlabel || r.label || t('文件系统分区')
+                            : names[r.region] || r.region}
+                          {' · '}
+                          {r.path}
+                          {' · '}
+                          {fmt(r.size)}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                   <div className="info-strip">
                     {t('区域总容量：')}
                     {fmt(region!.size)} = {region!.size.toLocaleString(locale)}
