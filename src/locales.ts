@@ -1050,5 +1050,9 @@ export default {
   "显示版本号并退出": "show program version and exit",
   "）": ")",
   "：": ": ",
-  "；": "; "
+  "；": "; ",
+  "分区起点：{0} B；区域内偏移：{1} B；用户区绝对偏移：{2} B。分区内的 0 对应分区起点。": "Partition start: {0} B; offset within region: {1} B; absolute offset in user area: {2} B. Offset 0 within the partition refers to its start.",
+  "BOOT 区使用独立地址空间，偏移 0 就是该 BOOT 区起点。": "BOOT regions have independent address spaces. Offset 0 refers to the start of the selected BOOT region.",
+  "当前偏移以用户区起点为基准。": "The current offset is relative to the start of the user area.",
+  "区域内读取偏移": "Read offset within region"
 };

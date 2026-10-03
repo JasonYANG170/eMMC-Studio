@@ -356,6 +356,8 @@ function App() {
     setExt('');
     setHex(null);
     setHexRange(null);
+    setOffset('0');
+    setHexLength('512');
   }, [selected]);
   useEffect(() => {
     setFileEditing(false);
@@ -363,6 +365,8 @@ function App() {
     if (page === 'files' && region?.region === 'partition') loadFiles('');
     setHex(null);
     setHexRange(null);
+    setOffset('0');
+    setHexLength(String(Math.min(512, region?.size || 512)));
     setPath('');
     setEntries([]);
   }, [regionPath, page]);
@@ -1436,9 +1440,23 @@ function App() {
                     {fmt(region!.size)} = {region!.size.toLocaleString(locale)}
                     {t('字节。1 KiB = 1024 B；1 MiB = 1024 KiB；1 GiB = 1024 MiB。')}
                   </div>
+                  <div className="info-strip">
+                    {region?.region === 'partition'
+                      ? t(
+                          '分区起点：{0} B；区域内偏移：{1} B；用户区绝对偏移：{2} B。分区内的 0 对应分区起点。',
+                          [
+                            ((region.start || 0) * 512).toLocaleString(locale),
+                            Number(offset).toLocaleString(locale),
+                            ((region.start || 0) * 512 + Number(offset)).toLocaleString(locale),
+                          ],
+                        )
+                      : region?.region.startsWith('boot')
+                        ? t('BOOT 区使用独立地址空间，偏移 0 就是该 BOOT 区起点。')
+                        : t('当前偏移以用户区起点为基准。')}
+                  </div>
                   <div className="hex-toolbar">
                     <ByteInput
-                      label={t('读取偏移')}
+                      label={t('区域内读取偏移')}
                       value={Number(offset)}
                       onChange={(n) => setOffset(String(n))}
                       max={region!.size - 1}
