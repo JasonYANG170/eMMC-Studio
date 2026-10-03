@@ -218,7 +218,11 @@ class StreamDownloads:
                     )
                     source = open_region(r)
                     source.seek(off)
-                    name = f'{r["name"]}-{off}.bin'
+                    name = (
+                        f'{r["name"]}.img'
+                        if off == 0 and length == r["size"]
+                        else f'{r["name"]}-{off}.bin'
+                    )
                 else:
                     root = m.mount(r, False)
                     path = safe_path(root, args["path"])
