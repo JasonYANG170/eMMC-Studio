@@ -357,7 +357,7 @@ function App() {
     setHex(null);
     setHexRange(null);
     setOffset('0');
-    setHexLength('512');
+    setHexLength(String(disk?.regions[0]?.size || 512));
   }, [selected]);
   useEffect(() => {
     setFileEditing(false);
@@ -366,7 +366,7 @@ function App() {
     setHex(null);
     setHexRange(null);
     setOffset('0');
-    setHexLength(String(Math.min(512, region?.size || 512)));
+    setHexLength(String(region?.size || 512));
     setPath('');
     setEntries([]);
   }, [regionPath, page]);
@@ -541,7 +541,22 @@ function App() {
     );
   const regionSelector = disk ? (
     <div className="region-select graphical-select">
-      <RegionMap disk={disk} selected={region?.path} onSelect={setRegionPath} />
+      <RegionMap
+        disk={disk}
+        selected={region?.path}
+        onSelect={(path) => {
+          setRegionPath(path);
+          if (page === 'hex') {
+            const selectedRegion = disk.regions.find((r) => r.path === path);
+            if (selectedRegion) {
+              setOffset('0');
+              setHexLength(String(selectedRegion.size));
+              setHex(null);
+              setHexRange(null);
+            }
+          }
+        }}
+      />
       {disk.protected && (
         <span className="badge amber">
           <Lock size={12} />
