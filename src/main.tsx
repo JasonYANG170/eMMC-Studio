@@ -1091,6 +1091,28 @@ function App() {
                                 <td>
                                   <div className="row-actions">
                                     <button
+                                      title={t('导出分区 IMG')}
+                                      onClick={() =>
+                                        open(
+                                          t('导出分区 IMG'),
+                                          {
+                                            ...targetArgs(r),
+                                            op: 'range_export',
+                                            offset: 0,
+                                            length: r.size,
+                                          },
+                                          [],
+                                          false,
+                                          t(
+                                            '完整分区将直接流式下载为 IMG 文件，不在设备上暂存镜像。',
+                                          ),
+                                        )
+                                      }
+                                    >
+                                      <Download size={15} />
+                                      IMG
+                                    </button>
+                                    <button
                                       title={t('修改属性')}
                                       disabled={!disk.writable}
                                       onClick={() =>

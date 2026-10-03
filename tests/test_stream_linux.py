@@ -109,6 +109,30 @@ def main():
         mutate("partition", loop, action="create", start=2048, size=196608)
         part = next(x for x in inventory() if x["path"] == loop)["regions"][1]["path"]
         mutate("format", part, filesystem="ext4", label="STREAM")
+        region = next(
+            r for x in inventory() if x["path"] == loop
+            for r in x["regions"] if r["path"] == part
+        )
+        job = prepare("range_export", target=part, offset=0, length=region["size"])
+        response = client.get(
+            "/api/v1/streams/" + job["result"]["stream"], buffered=False
+        )
+        assert response.status_code == 200
+        assert ".img" in response.headers["Content-Disposition"]
+        assert response.content_length == region["size"]
+        digest = hashlib.sha256()
+        count = 0
+        for block in response.response:
+            assert len(block) <= 256 * 1024
+            count += len(block)
+            digest.update(block)
+        response.close()
+        with open(part, "rb", buffering=0) as source:
+            expected = hashlib.file_digest(source, "sha256").hexdigest()
+        assert count == region["size"]
+        assert digest.hexdigest() == expected == completed(job)["result"]["sha256"]
+        assert list(worker.WEBSTATE.joinpath("downloads").iterdir()) == original_downloads
+        assert list(worker.STATE.joinpath("backups").iterdir()) == original_backups
         mutate(
             "file_write",
             part,
