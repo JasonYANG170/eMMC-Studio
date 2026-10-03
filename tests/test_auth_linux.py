@@ -248,6 +248,25 @@ class AuthTests(unittest.TestCase):
             )
             self.assertEqual(self.web.auth_data()["algorithm"], "scrypt")
 
+    def test_10_auth_rename_is_durable(self):
+        from unittest.mock import patch
+        import stat
+
+        synced = []
+        real_fsync = os.fsync
+
+        def sync(fd):
+            synced.append(stat.S_ISDIR(os.fstat(fd).st_mode))
+            real_fsync(fd)
+
+        with tempfile.TemporaryDirectory() as folder, patch.object(
+            self.web, "AUTH", Path(folder) / "auth.json"
+        ), patch.object(self.web.os, "fsync", side_effect=sync):
+            self.web.save_auth({"version": "test-durable"})
+            self.assertEqual(synced, [False, True])
+            self.assertEqual(self.web.auth_data(), {"version": "test-durable"})
+            self.assertEqual(list(Path(folder).glob(".auth-*.tmp")), [])
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
