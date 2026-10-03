@@ -1059,5 +1059,6 @@ export default {
   "完整分区将直接流式下载为 IMG 文件，不在设备上暂存镜像。": "The complete partition will stream directly to an IMG download without storing an image on the device.",
   "独立地址空间 · 起始偏移 0": "Independent address space · starting offset 0",
   "导出 BOOT 区 IMG": "Export BOOT region IMG",
-  "完整 BOOT 区将直接流式下载为 IMG 文件，不在设备上暂存镜像。": "The complete BOOT region will stream directly to an IMG download without storing an image on the device."
+  "完整 BOOT 区将直接流式下载为 IMG 文件，不在设备上暂存镜像。": "The complete BOOT region will stream directly to an IMG download without storing an image on the device.",
+  "选择存储区域": "Select storage region"
 };
