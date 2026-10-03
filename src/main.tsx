@@ -1473,7 +1473,15 @@ function App() {
                     <ByteInput
                       label={t('区域内读取偏移')}
                       value={Number(offset)}
-                      onChange={(n) => setOffset(String(n))}
+                      onChange={(n) => {
+                        setOffset(String(n));
+                        if (Number.isSafeInteger(n) && n >= 0 && n < region!.size) {
+                          const remaining = region!.size - n;
+                          setHexLength((length) =>
+                            Number(length) > remaining ? String(remaining) : length,
+                          );
+                        }
+                      }}
                       max={region!.size - 1}
                     />
                     <ByteInput
