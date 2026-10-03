@@ -1236,6 +1236,51 @@ function App() {
                                 </td>
                               </tr>
                             ))}
+                          {disk.regions
+                            .filter((r) => r.region === 'boot0' || r.region === 'boot1')
+                            .map((r) => (
+                              <tr key={r.path}>
+                                <td>
+                                  <strong>{r.region.toUpperCase()}</strong>
+                                  <small>{r.path}</small>
+                                </td>
+                                <td>
+                                  <span className="badge">{t('硬件启动区')}</span>
+                                </td>
+                                <td>
+                                  {fmt(r.size)}
+                                  <small>{t('独立地址空间 · 起始偏移 0')}</small>
+                                  <small>{r.ro ? t('只读') : t('可读写')}</small>
+                                </td>
+                                <td>—</td>
+                                <td>
+                                  <div className="row-actions">
+                                    <button
+                                      title={t('导出 BOOT 区 IMG')}
+                                      onClick={() =>
+                                        open(
+                                          t('导出 BOOT 区 IMG') + ' · ' + r.region.toUpperCase(),
+                                          {
+                                            ...targetArgs(r),
+                                            op: 'range_export',
+                                            offset: 0,
+                                            length: r.size,
+                                          },
+                                          [],
+                                          false,
+                                          t(
+                                            '完整 BOOT 区将直接流式下载为 IMG 文件，不在设备上暂存镜像。',
+                                          ),
+                                        )
+                                      }
+                                    >
+                                      <Download size={15} />
+                                      IMG
+                                    </button>
+                                  </div>
+                                </td>
+                              </tr>
+                            ))}
                         </tbody>
                       </table>
                     </div>
