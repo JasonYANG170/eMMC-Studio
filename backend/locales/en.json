@@ -524,7 +524,7 @@
   "目标 ·": "Target · ",
   "目标现有数据将被覆盖。源容量不得超过目标；整盘对应整盘，分区对应分区。": "Existing target data will be overwritten. The source must fit in the target; clone disk to disk or partition to partition.",
   "直接编辑 HEX 或 ASCII · Enter / 离开单元格提交 ·": "Edit HEX or ASCII directly · Enter / leave cell to commit · ",
-  "硬件启动区": "Hardware boot regions",
+  "硬件启动区": "Hardware boot region",
   "硬件启动区 · 各区域有独立地址空间": "Hardware boot regions · each has an independent address space",
   "硬件复位配置": "Hardware reset configuration",
   "硬件版本": "Hardware revision",
@@ -1054,5 +1054,8 @@
   "当前偏移以用户区起点为基准。": "The current offset is relative to the start of the user area.",
   "区域内读取偏移": "Read offset within region",
   "导出分区 IMG": "Export partition IMG",
-  "完整分区将直接流式下载为 IMG 文件，不在设备上暂存镜像。": "The complete partition will stream directly to an IMG download without storing an image on the device."
+  "完整分区将直接流式下载为 IMG 文件，不在设备上暂存镜像。": "The complete partition will stream directly to an IMG download without storing an image on the device.",
+  "独立地址空间 · 起始偏移 0": "Independent address space · starting offset 0",
+  "导出 BOOT 区 IMG": "Export BOOT region IMG",
+  "完整 BOOT 区将直接流式下载为 IMG 文件，不在设备上暂存镜像。": "The complete BOOT region will stream directly to an IMG download without storing an image on the device."
 }
