@@ -22,6 +22,8 @@ def main():
         root / "VERSION",
         root / "docs/CLI.md",
         root / "docs/UPGRADE.md",
+        root / "docs/EMMC-HOTPLUG.md",
+        root / "docs/USB-NETWORK.md",
     ]
     files += sorted((root / "backend").glob("*.py"))
     files += sorted((root / "backend/locales").glob("*.json"))

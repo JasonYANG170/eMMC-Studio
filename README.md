@@ -8,6 +8,10 @@
 
 从 1.1.0 开始支持串口与 SSH 命令行：`sudo emmc-studio --help`，详见 [CLI 操作教程](docs/CLI.md)。命令行与网页共用磁盘保护和任务记录。
 
+Windows 可通过 OTG USB 网卡直连网页、API 和 SSH，无需经过局域网。当前设备已实测，安装和停用方式见 [USB 直连教程](docs/USB-NETWORK.md)。这是可选配置，默认安装不会修改 OTG。
+
+可更换 eMMC 的读卡器可启用内核轮询检测，并保留原高速配置。当前硬件反复换片仍存在需重启才能识别的情况，尚未完成稳定热插拔验收。配置、换片和回退方法见 [eMMC 热插拔教程](docs/EMMC-HOTPLUG.md)。
+
 ![工作空间](docs/images/overview-dark.png)
 
 ## 功能
@@ -167,7 +171,7 @@ sudo sh /opt/emmc-studio/deploy/uninstall.sh
 ## 常见问题
 
 - **网页打不开：** 检查设备 IP、网络、防火墙 TCP 80 和服务日志。若 80 被 nginx/Apache 等占用，安装器会拒绝继续。
-- **找不到 eMMC：** 检查 lsblk、dmesg 和 MMC 驱动。本项目不提供 USB Gadget 多磁盘导出，不修改 OTG。
+- **找不到 eMMC：** 检查 lsblk、dmesg 和 MMC 驱动。本项目不提供 USB Gadget 多磁盘导出；可选的 USB 网卡配置用于访问管理服务。
 - **BOOT 无法打开文件编辑：** BOOT0/BOOT1 通常无常规文件系统，使用扇区编辑。硬件永久保护不能由软件关闭，工具不提供永久配置操作。
 - **偏移 3 MiB、长度 4 MiB 超范围：** 长度是从偏移起计算；4 MiB 区域从 3 MiB 开始只剩 1 MiB。读取整个区域用偏移 0、长度 4 MiB 或“整个区域”。
 - **寿命 0x01：** A/B 表示预计已消耗 0–10%；PRE_EOL 0x01 表示备用块消耗 <80%。这是区间，不是精确剩余寿命，也不能据此确认 NAND 裸晶型号或 MLC/TLC。

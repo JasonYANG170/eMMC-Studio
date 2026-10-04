@@ -110,8 +110,11 @@ def main():
         part = next(x for x in inventory() if x["path"] == loop)["regions"][1]["path"]
         mutate("format", part, filesystem="ext4", label="STREAM")
         region = next(
-            r for x in inventory() if x["path"] == loop
-            for r in x["regions"] if r["path"] == part
+            r
+            for x in inventory()
+            if x["path"] == loop
+            for r in x["regions"]
+            if r["path"] == part
         )
         job = prepare("range_export", target=part, offset=0, length=region["size"])
         response = client.get(
@@ -131,7 +134,9 @@ def main():
             expected = hashlib.file_digest(source, "sha256").hexdigest()
         assert count == region["size"]
         assert digest.hexdigest() == expected == completed(job)["result"]["sha256"]
-        assert list(worker.WEBSTATE.joinpath("downloads").iterdir()) == original_downloads
+        assert (
+            list(worker.WEBSTATE.joinpath("downloads").iterdir()) == original_downloads
+        )
         assert list(worker.STATE.joinpath("backups").iterdir()) == original_backups
         mutate(
             "file_write",

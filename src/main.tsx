@@ -50,6 +50,7 @@ import { ResizeView } from './ResizeView';
 import { DiskDetails } from './DiskDetails';
 import { CacheCleaner } from './CacheCleaner';
 import { UpgradePage } from './UpgradePage';
+import { UsbModePanel } from './UsbModePanel';
 import { resizeLimit } from './layout';
 import { VolumeLabel } from './VolumeLabel';
 import { wantsDownload, readyDownloads } from './downloads';
@@ -82,6 +83,8 @@ type Disk = Region & {
   table: any;
   topology: string;
   sector_size: number;
+  block_info?: { diskseq?: string };
+  hotplug?: { polling: boolean; non_removable: boolean };
   health: { life_time: string; pre_eol: string; manufacturer: string; revision: string };
   rpmb: { path: string; size: number; available: boolean; note: string };
 };
@@ -258,6 +261,9 @@ function App() {
   const [hexRange, setHexRange] = useState<{ start: number; length: number } | null>(null);
   const disk = disks.find((d) => d.path === selected),
     region = disk?.regions.find((r) => r.path === regionPath) || disk?.regions[0];
+  const mediaKey = disk ? disk.identity + ':' + (disk.block_info?.diskseq || '') : '';
+  const lastEmmcMedia = useRef('');
+  const refreshing = useRef(false);
   const targetArgs = (r: Region = region!, d: Disk = disk!) => ({
     target: r.path,
     identity: d.identity,
@@ -279,19 +285,29 @@ function App() {
   const allRegions = disks.flatMap((d) => d.regions.map((r) => ({ ...r, disk: d }))),
     usbRegions = allRegions.filter((r) => r.disk.kind === 'usb' && r.region === 'partition');
   const refresh = async () => {
+    if (refreshing.current) return;
+    refreshing.current = true;
     try {
       const data = await api('/devices');
       setDisks(data.disks);
       setBusy(data.busy);
       setFree(data.local_free);
+      const emmc = data.disks.find((d: Disk) => d.kind === 'emmc');
+      const emmcMedia = emmc ? emmc.identity + ':' + (emmc.block_info?.diskseq || '') : '';
+      const newEmmc = !!emmcMedia && emmcMedia !== lastEmmcMedia.current;
+      lastEmmcMedia.current = emmcMedia;
       setError((previous) => (previous.includes('Failed to fetch') ? '' : previous));
       setSelected((prev) =>
-        data.disks.some((d: Disk) => d.path === prev)
-          ? prev
-          : data.disks.find((d: Disk) => d.kind === 'emmc')?.path || data.disks[0]?.path || '',
+        newEmmc
+          ? emmc.path
+          : data.disks.some((d: Disk) => d.path === prev)
+            ? prev
+            : data.disks.find((d: Disk) => d.kind === 'emmc')?.path || data.disks[0]?.path || '',
       );
     } catch (e) {
       setError(String(e));
+    } finally {
+      refreshing.current = false;
     }
   };
   const refreshBackups = async () => {
@@ -338,7 +354,7 @@ function App() {
     refreshBackups();
     refreshSettings();
     api('/jobs').then((d) => setJobs(d.jobs));
-    const timer = setInterval(refresh, 10000);
+    const timer = setInterval(refresh, 3000);
     const stream = new EventSource('/api/v1/events');
     stream.onmessage = (e) => {
       const d = JSON.parse(e.data);
@@ -358,7 +374,8 @@ function App() {
     setHexRange(null);
     setOffset('0');
     setHexLength(String(disk?.regions[0]?.size || 512));
-  }, [selected]);
+    setDialog(null);
+  }, [selected, mediaKey]);
   useEffect(() => {
     setFileEditing(false);
     setTextEdit(null);
@@ -369,7 +386,7 @@ function App() {
     setHexLength(String(region?.size || 512));
     setPath('');
     setEntries([]);
-  }, [regionPath, page]);
+  }, [regionPath, page, mediaKey]);
   useEffect(() => {
     if (page === 'backups') refreshBackups();
     if (page === 'settings') refreshSettings();
@@ -394,7 +411,7 @@ function App() {
     return () => {
       active = false;
     };
-  }, [page, selected, disk?.kind]);
+  }, [page, selected, disk?.kind, mediaKey]);
   useEffect(() => {
     if (notice) {
       const t = setTimeout(() => setNotice(''), 7000);
@@ -759,6 +776,9 @@ function App() {
                     <div className="hero-copy">
                       <div className="hero-tags">
                         <span>{names[disk.kind] || disk.kind}</span>
+                        {disk.kind === 'emmc' &&
+                          disk.hotplug?.polling &&
+                          !disk.hotplug?.non_removable && <span>{t('热插拔检测已启用')}</span>}
                         <span>
                           <span className="pulse" />
                           {busy.includes(disk.identity) ? t('任务执行中') : t('已连接')}
@@ -1694,6 +1714,7 @@ function App() {
                   )}
                 </section>
               )}
+              {page === 'transfer' && <UsbModePanel api={api} post={post} />}
               {page === 'transfer' && disk && (
                 <>
                   {regionSelector}
@@ -2357,6 +2378,7 @@ function App() {
               {page === 'upgrade' && <UpgradePage api={api} post={post} />}
               {page === 'settings' && (
                 <>
+                  <UsbModePanel api={api} post={post} />
                   <div className="two-columns">
                     <section className="panel">
                       <PanelHead icon={Lock} title={t('管理员密码')} />

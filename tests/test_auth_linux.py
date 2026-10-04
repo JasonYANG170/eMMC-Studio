@@ -27,6 +27,13 @@ class AuthTests(unittest.TestCase):
     def test_01_unauthenticated_denied(self):
         self.assertEqual(self.client.get("/api/v1/devices").status_code, 401)
         self.assertEqual(self.client.get("/api/v1/system").status_code, 401)
+        self.assertEqual(self.client.get("/api/v1/usb-mode").status_code, 401)
+        self.assertEqual(
+            self.client.post(
+                "/api/v1/usb-mode", json={"mode": "host", "acknowledged": True}
+            ).status_code,
+            401,
+        )
         self.assertEqual(self.client.get("/api/v1/upgrade").status_code, 401)
         self.assertEqual(
             self.client.post(
@@ -266,6 +273,41 @@ class AuthTests(unittest.TestCase):
             self.assertEqual(synced, [False, True])
             self.assertEqual(self.web.auth_data(), {"version": "test-durable"})
             self.assertEqual(list(Path(folder).glob(".auth-*.tmp")), [])
+
+    def test_11_usb_connection_cannot_disconnect_itself(self):
+        from unittest.mock import patch
+
+        with tempfile.TemporaryDirectory() as folder, patch.object(
+            self.web, "AUTH", Path(folder) / "auth.json"
+        ):
+            self.web.set_password("emmc-admin", "test-only-usb-password")
+            client = self.web.app.test_client()
+            csrf = client.post(
+                "/api/v1/auth/login",
+                json={"username": "emmc-admin", "password": "test-only-usb-password"},
+            ).json["csrf"]
+            with patch.object(
+                self.web, "rpc", return_value={"id": "test-usb-task"}
+            ) as rpc:
+                args = {"mode": "host", "acknowledged": True}
+                response = client.post(
+                    "/api/v1/usb-mode",
+                    json=args,
+                    headers={"X-CSRF-Token": csrf},
+                    environ_overrides={"REMOTE_ADDR": "172.30.77.2"},
+                )
+                self.assertEqual(response.status_code, 400)
+                rpc.assert_not_called()
+                response = client.post("/api/v1/usb-mode", json=args)
+                self.assertEqual(response.status_code, 403)
+                rpc.assert_not_called()
+                response = client.post(
+                    "/api/v1/usb-mode",
+                    json=args,
+                    headers={"X-CSRF-Token": csrf},
+                    environ_overrides={"REMOTE_ADDR": "192.168.5.113"},
+                )
+                self.assertEqual(response.status_code, 202)
 
 
 if __name__ == "__main__":

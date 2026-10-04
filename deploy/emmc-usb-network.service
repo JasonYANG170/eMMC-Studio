@@ -1,0 +1,14 @@
+[Unit]
+Description=eMMC Studio optional USB network
+After=NetworkManager.service
+
+[Service]
+Type=simple
+ExecStart=/usr/bin/python3 /usr/local/lib/emmc-studio-usb/usb-network.py start
+ExecStopPost=/usr/bin/python3 /usr/local/lib/emmc-studio-usb/usb-network.py stop
+Restart=on-failure
+RestartSec=5
+RuntimeDirectory=emmc-usb-network
+
+[Install]
+WantedBy=multi-user.target

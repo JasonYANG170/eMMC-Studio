@@ -32,6 +32,9 @@ jobs:
           python tests/test_auth_linux.py
           python tests/test_cache_linux.py
           python tests/test_extcsd_lock.py
+          python tests/test_discovery_timeout.py
+          python tests/test_media_mount_linux.py
+          python tests/test_usb_mode.py
           python tests/test_cli.py
           python tests/test_i18n.py
           python scripts/generate_locales.py --check
@@ -45,7 +48,12 @@ jobs:
           sudo "$(command -v python)" tests/test_cli_linux.py
       - name: Deployment shell validation
         run: |
-          for script in install.sh deploy/*.sh; do sh -n "$script"; done
+          for script in install.sh deploy/*.sh; do
+            case "$(head -n 1 "$script")" in
+              *bash*) bash -n "$script" ;;
+              *) sh -n "$script" ;;
+            esac
+          done
           shellcheck -S warning install.sh deploy/*.sh
       - run: python scripts/package_release.py
       - uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7

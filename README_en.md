@@ -8,6 +8,10 @@ Listens on **0.0.0.0:80** by default. Open `http://<device-IP>/`. Supports mobil
 
 Serial and SSH command-line access is available from version 1.1.0: `sudo emmc-studio --help`. See the [CLI guide](docs/CLI.md). The CLI and web interface share disk protection rules and task records.
 
+Optional OTG USB networking connects Windows directly to the web interface, API, and SSH. The settings and clone pages provide USB Host/Device mode switching; switch to Ethernet or a separate serial connection before changing roles. See the [USB connection guide](docs/USB-NETWORK.md).
+
+Replaceable eMMC readers can enable kernel polling while retaining the original high-speed settings. Polling does not guarantee reliable hot swapping on every chip or adapter; repeated swaps on the current hardware still sometimes require a reboot. See the [hotplug configuration and rollback guide](docs/EMMC-HOTPLUG.md).
+
 ![Workspace](docs/images/overview-dark.png)
 
 ## Features

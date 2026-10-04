@@ -334,6 +334,24 @@ def devices():
     return jsonify(rpc("inventory"))
 
 
+@app.get("/api/v1/usb-mode")
+def usb_status():
+    return jsonify(rpc("usb_status"))
+
+
+@app.post("/api/v1/usb-mode")
+def usb_mode():
+    import ipaddress
+
+    args = body()
+    remote = ipaddress.ip_address(request.remote_addr or "127.0.0.1")
+    if isinstance(remote, ipaddress.IPv6Address) and remote.ipv4_mapped:
+        remote = remote.ipv4_mapped
+    if args.get("mode") == "host" and remote in ipaddress.ip_network("172.30.77.0/24"):
+        raise StorageError("当前正通过 USB 连接，请先改用下方以太网地址或独立串口。")
+    return jsonify(rpc("usb_mode", args)), 202
+
+
 @app.get("/api/v1/extcsd")
 def extcsd():
     return jsonify(text=rpc("extcsd", request.args.to_dict()))

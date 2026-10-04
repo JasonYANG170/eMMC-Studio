@@ -8,11 +8,78 @@ import os
 import re
 import stat
 import subprocess
+import threading
+import time
 from pathlib import Path
 
 BLOCK = 4 * 1024 * 1024
 HEX_LIMIT = 65536
 TEXT_LIMIT = 2 * 1024 * 1024
+_table_lock = threading.Lock()
+_table_busy = set()
+_table_retry = {}
+
+
+def partition_table(path, identity, generation):
+    """A stalled media read must not block discovery of replacement cards."""
+    key = (path, identity, generation)
+    with _table_lock:
+        if (
+            key in _table_busy
+            or len(_table_busy) >= 4
+            or time.monotonic() < _table_retry.get(key, 0)
+        ):
+            return None
+        _table_busy.add(key)
+    process = None
+    deferred = False
+    healthy = False
+    try:
+        process = subprocess.Popen(
+            ["sfdisk", "--json", path],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            text=True,
+            encoding="utf-8",
+            errors="replace",
+        )
+        stdout, _ = process.communicate(timeout=3)
+        if process.returncode == 0:
+            table = json.loads(stdout)["partitiontable"]
+            healthy = True
+            return table
+    except subprocess.TimeoutExpired:
+        process.kill()
+        deferred = True
+
+        def reap():
+            try:
+                process.communicate()
+            finally:
+                with _table_lock:
+                    _table_busy.discard(key)
+
+        threading.Thread(target=reap, daemon=True).start()
+    except (OSError, ValueError, KeyError):
+        pass
+    finally:
+        with _table_lock:
+            if not deferred:
+                _table_busy.discard(key)
+            # Limit retries against failing media; fresh CID/diskseq bypasses this.
+            if healthy:
+                _table_retry.pop(key, None)
+            else:
+                _table_retry[key] = time.monotonic() + 30
+            if len(_table_retry) > 64:
+                expired = [
+                    k
+                    for k, deadline in _table_retry.items()
+                    if deadline < time.monotonic()
+                ]
+                for old in expired:
+                    _table_retry.pop(old, None)
+    return None
 
 
 class StorageError(Exception):
@@ -200,14 +267,15 @@ def inventory():
             "manufacturer": read(sysdev / "manfid"),
             "revision": read(sysdev / "rev"),
         }
-        disk["table"] = None
-        try:
-            disk["table"] = json.loads(run(["sfdisk", "--json", r["path"]]))[
-                "partitiontable"
-            ]
-        except (StorageError, json.JSONDecodeError):
-            pass
+        disk["table"] = partition_table(
+            r["path"], disk["identity"], read(f"/sys/class/block/{name}/diskseq")
+        )
         disk["topology"] = str(sysdev.resolve())
+        controller = sysdev.resolve().parent.parent.parent
+        disk["hotplug"] = {
+            "polling": (controller / "of_node/broken-cd").exists(),
+            "non_removable": (controller / "of_node/non-removable").exists(),
+        }
         host = sysdev.resolve().parent.name
         ios = (
             read(Path("/sys/kernel/debug") / host / "ios")

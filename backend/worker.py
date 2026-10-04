@@ -20,6 +20,7 @@ from pathlib import Path
 from core import *
 from stream_download import StreamDownloads
 from cache_cleanup import CacheCleanup
+from usb_mode import UsbModeControl
 
 STATE = Path(os.environ.get("EMMC_WORKER_STATE", "/var/lib/emmc-worker"))
 WEBSTATE = Path(os.environ.get("EMMC_WEB_STATE", "/var/lib/emmc-web"))
@@ -43,6 +44,8 @@ class Manager:
         self.guard = threading.RLock()
         self.busy = set()
         self.upgrade_frozen = False
+        self.usb_switching = False
+        self.usb = UsbModeControl(self)
         self.cancels = {}
         self.mounts = {}
         self.streams = StreamDownloads(self)
@@ -96,6 +99,8 @@ class Manager:
 
     def acquire(self, keys):
         with self.guard:
+            if self.usb_switching:
+                raise StorageError("USB 模式正在切换，请稍后执行存储操作")
             if self.upgrade_frozen or Path("/run/emmc-updater/maintenance").exists():
                 raise StorageError("应用正在升级，暂时不能提交存储操作")
             if set(keys) & self.busy:
@@ -151,7 +156,8 @@ class Manager:
         if r.get("fstype") not in ("ext2", "ext3", "ext4", "vfat", "exfat", "ntfs"):
             raise StorageError("该文件系统不支持文件管理")
         old = self.mounts.get(path)
-        if old and old["rw"] == writable:
+        media = (d["identity"], d.get("block_info", {}).get("diskseq"))
+        if old and old["rw"] == writable and old.get("media") == media:
             return old["root"]
         if old:
             run(["umount", str(old["root"])])
@@ -173,7 +179,7 @@ class Manager:
         if not writable and r.get("fstype") in ("ext3", "ext4"):
             opts += ",noload"
         run(["mount", "-o", opts, path, str(root)])
-        self.mounts[path] = {"root": root, "rw": writable}
+        self.mounts[path] = {"root": root, "rw": writable, "media": media}
         return root
 
     def fs_list(self, args):
@@ -390,6 +396,9 @@ class Manager:
             job["finished"] = time.time()
             job["cancellable"] = False
             self.save(job)
+            if args.get("op") == "usb_mode":
+                with self.guard:
+                    self.usb_switching = False
             self.release(keys)
             self.cancels.pop(job["id"], None)
 
@@ -502,6 +511,8 @@ class Manager:
 
     def perform(self, args, job, progress, cancel):
         op = args["op"]
+        if op == "usb_mode":
+            return self.usb.change(args, job, progress, cancel)
         if op == "import_backup":
             return self.import_backup(args, progress, cancel)
         if op == "backup_export":
@@ -1209,6 +1220,10 @@ class Manager:
     def request(self, req):
         op = req.get("method")
         args = req.get("args", {})
+        if op == "usb_status":
+            return self.usb.status()
+        if op == "usb_mode":
+            return self.usb.submit(args)
         if op in ("upgrade_freeze", "upgrade_unfreeze"):
             if not req.get("_root_peer"):
                 raise StorageError("升级维护仅允许 root 工作进程调用")
