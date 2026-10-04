@@ -44,6 +44,21 @@ class DiscoveryTimeoutTests(unittest.TestCase):
             self.assertIsNone(core.partition_table("/dev/test", "new-card", "2"))
             self.assertEqual(popen.call_count, 2)
 
+    def test_new_partition_table_is_visible_immediately_after_blank_disk(self):
+        blank = MagicMock(returncode=1)
+        blank.communicate.return_value = ("", "No partition table")
+        created = MagicMock(returncode=0)
+        created.communicate.return_value = (
+            json.dumps({"partitiontable": {"label": "gpt"}}),
+            "",
+        )
+        with patch.object(core.subprocess, "Popen", side_effect=[blank, created]):
+            self.assertIsNone(core.partition_table("/dev/test", "same-card", "1"))
+            self.assertFalse(core._table_retry)
+            self.assertEqual(
+                core.partition_table("/dev/test", "same-card", "1"), {"label": "gpt"}
+            )
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)

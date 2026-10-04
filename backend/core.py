@@ -33,7 +33,7 @@ def partition_table(path, identity, generation):
         _table_busy.add(key)
     process = None
     deferred = False
-    healthy = False
+    stalled = False
     try:
         process = subprocess.Popen(
             ["sfdisk", "--json", path],
@@ -46,9 +46,9 @@ def partition_table(path, identity, generation):
         stdout, _ = process.communicate(timeout=3)
         if process.returncode == 0:
             table = json.loads(stdout)["partitiontable"]
-            healthy = True
             return table
     except subprocess.TimeoutExpired:
+        stalled = True
         process.kill()
         deferred = True
 
@@ -67,10 +67,10 @@ def partition_table(path, identity, generation):
             if not deferred:
                 _table_busy.discard(key)
             # Limit retries against failing media; fresh CID/diskseq bypasses this.
-            if healthy:
-                _table_retry.pop(key, None)
-            else:
+            if stalled:
                 _table_retry[key] = time.monotonic() + 30
+            else:
+                _table_retry.pop(key, None)
             if len(_table_retry) > 64:
                 expired = [
                     k
